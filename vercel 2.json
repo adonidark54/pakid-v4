@@ -1,11 +1,3 @@
 {
-  "buildCommand": "react-scripts build",
-  "outputDirectory": "build",
-  "framework": "create-react-app",
-  "functions": {
-    "api/*.js": {
-      "memory": 512,
-      "maxDuration": 30
-    }
-  }
+  "framework": "create-react-app"
 }
