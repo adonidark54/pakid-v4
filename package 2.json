@@ -1,5 +1,5 @@
 {
-  "name": "pakid-pro",
+  "name": "pakid-v4",
   "version": "1.0.0",
   "scripts": {
     "build": "react-scripts build",
