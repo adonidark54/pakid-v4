@@ -1,0 +1,1306 @@
+import { useState, useRef, useEffect } from "react";
+ 
+const THEMES = {
+  pink:     { bg:"#fafafa", card:"#ffffff", accent:"#be185d", text:"#111827", sub:"#6b7280", nav:"#f9fafb", border:"#fce7f3", chip:"#fdf2f8" },
+  beach:    { bg:"#f8fafc", card:"#ffffff", accent:"#0369a1", text:"#0f172a", sub:"#64748b", nav:"#f1f5f9", border:"#e0f2fe", chip:"#f0f9ff" },
+  sparkles: { bg:"#faf5ff", card:"#ffffff", accent:"#7c3aed", text:"#1e1b4b", sub:"#6b7280", nav:"#f5f3ff", border:"#ede9fe", chip:"#f5f3ff" },
+  midnight: { bg:"#0f172a", card:"#1e293b", accent:"#38bdf8", text:"#f8fafc", sub:"#94a3b8", nav:"#0f172a", border:"#334155", chip:"#1e293b" },
+  forest:   { bg:"#f8fdf9", card:"#ffffff", accent:"#166534", text:"#0f1f12", sub:"#6b7280", nav:"#f0fdf4", border:"#bbf7d0", chip:"#f0fdf4" },
+  coffee:   { bg:"#fdf8f4", card:"#ffffff", accent:"#78350f", text:"#1c1009", sub:"#6b7280", nav:"#fef3c7", border:"#fde68a", chip:"#fffbeb" },
+  peach:    { bg:"#fff8f5", card:"#ffffff", accent:"#c2410c", text:"#1c0a00", sub:"#6b7280", nav:"#fff7ed", border:"#fed7aa", chip:"#fff7ed" },
+  citrus:   { bg:"#fafaf5", card:"#ffffff", accent:"#92400e", text:"#1c1400", sub:"#6b7280", nav:"#fefce8", border:"#fde68a", chip:"#fefce8" },
+  lemon:    { bg:"#fdfdf0", card:"#ffffff", accent:"#854d0e", text:"#1a1200", sub:"#6b7280", nav:"#fefce8", border:"#fef08a", chip:"#fefce8" },
+  lime:     { bg:"#f7fdf2", card:"#ffffff", accent:"#3f6212", text:"#0f1f00", sub:"#6b7280", nav:"#f7fee7", border:"#d9f99d", chip:"#f7fee7" },
+  cherry:   { bg:"#fdf5f6", card:"#ffffff", accent:"#9f1239", text:"#1c0008", sub:"#6b7280", nav:"#fff1f2", border:"#fecdd3", chip:"#fff1f2" },
+  arctic:   { bg:"#f7fbff", card:"#ffffff", accent:"#075985", text:"#0a1929", sub:"#6b7280", nav:"#f0f9ff", border:"#bae6fd", chip:"#f0f9ff" },
+};
+const THEME_LABELS = {
+  pink:"🌸 Pink",beach:"🏖️ Beach",sparkles:"✨ Sparkles",midnight:"🌙 Midnight",
+  forest:"🌿 Forest",coffee:"☕ Coffee",peach:"🍑 Peach",citrus:"🍊 Citrus",
+  lemon:"🍋 Lemon",lime:"🍈 Lime",cherry:"🍒 Cherry",arctic:"🧊 Arctic",
+};
+const PLAN_LIMITS = { trial:5, monthly:15, yearly:50 };
+ 
+const TERMS = `PAKID PRO INT. END USER LICENSE AGREEMENT
+ 
+By checking the box below you agree to all terms herein.
+ 
+1. EDUCATIONAL PURPOSE ONLY: PaKid Pro Int. provides educational content only. Nothing herein constitutes financial advice, investment counsel, or professional advisory services. PaKid CANNOT GUARANTEE accuracy of any content provided.
+ 
+2. DISCLAIMER: The app is provided AS IS without warranties. Market simulations are strictly for educational illustration and shall not be interpreted as predictive of real market performance.
+ 
+3. SUBSCRIPTION AND BILLING: The 7-day free trial converts to a paid plan unless cancelled before expiry. Subscriptions renew automatically. No refunds except as required by law.
+ 
+4. USER ELIGIBILITY: Users must be 13 or older. Ages 13 to 17 require verifiable parental consent.
+ 
+5. INTELLECTUAL PROPERTY: All content and educational materials are proprietary to PaKid Pro Int. Users may not reproduce or distribute any content.
+ 
+6. LIMITATION OF LIABILITY: PaKid Pro Int. is not liable for any financial or consequential damages arising from use of this application.
+ 
+7. BINDING ARBITRATION: All disputes resolved through binding individual arbitration. User waives right to class action.
+ 
+8. MODIFICATIONS: These terms may change at any time. Continued use constitutes acceptance.
+ 
+BY CHECKING THE BOX YOU AGREE TO ALL TERMS AND ACKNOWLEDGE PAKID PRO INT. DOES NOT PROVIDE FINANCIAL ADVICE AND CANNOT GUARANTEE ACCURACY.`;
+ 
+const HOLIDAYS = [
+  {m:1,d:1,e:"🎆"},{m:2,d:14,e:"❤️"},{m:3,d:17,e:"🍀"},{m:4,d:1,e:"🃏"},
+  {m:5,d:5,e:"🌮"},{m:6,d:19,e:"✊"},{m:7,d:4,e:"🎇"},{m:10,d:31,e:"🎃"},
+  {m:11,d:11,e:"🎖️"},{m:12,d:25,e:"🎅"},{m:12,d:31,e:"🥂"},
+];
+function getHolidayEmoji() {
+  const now = new Date(), m = now.getMonth()+1, d = now.getDate();
+  for (const h of HOLIDAYS) { if (h.m===m && Math.abs(h.d-d)<=1) return h.e; }
+  return null;
+}
+const FC = [
+  {title:"Financial Analyst",pros:["Intellectually stimulating","Clear promotion path Analyst to VP","Exposure to many industries","Strong job security"],cons:["60-70hr weeks early career","High pressure deadlines","Can feel repetitive","Work-life balance takes effort"],traits:"Detail-oriented analytical thinkers who enjoy numbers, building models, and translating data into stories. Precision and patience are essential.",path:"Bachelor in Finance → 2-3 internships → entry-level analyst role → CFA certification accelerates advancement significantly."},
+  {title:"Investment Banker",pros:["Most prestigious finance career","Work on major corporate deals","Intense mentorship from senior bankers","Skills grow faster than any other path"],cons:["80-100 hour weeks at junior levels","High burnout rate across all firms","Extremely competitive culture","Personal life gets squeezed out"],traits:"Highly competitive resilient people who perform under extreme pressure without sacrificing quality. Must be exceptional communicators with thick skin.",path:"Top university Finance or Economics → summer banking internship → full-time analyst program → MBA from top-10 school often used to return as Associate."},
+  {title:"Financial Planner",pros:["Directly improve people lives","Build recurring client base over time","Flexible schedule once established","Deep relationship-driven meaningful work"],cons:["Commission income unpredictable early on","Building first 50 clients takes years","Heavy regulatory compliance always required","You carry weight of clients financial stress"],traits:"People-first empathetic trustworthy individuals who are great listeners. Must explain complex topics in plain language to all backgrounds.",path:"Bachelor in Finance → Series 65 or 66 license → CFP designation → start at large firm to build client base → go independent if desired."},
+  {title:"Venture Capital Analyst",pros:["Work with exciting startups and founders","Stimulating deal sourcing that changes constantly","Build powerful investor network","Front row seat to innovation before world sees it"],cons:["Extremely competitive to break into","Most startups fail so wins are rare","Investment cycles last 7-10 years","Limited decision-making authority junior levels"],traits:"Curious networked entrepreneurially minded people who quickly assess business models and spot patterns across industries.",path:"Top university → 2 years banking or startup → MBA from top school common bridge → network relentlessly into VC through LinkedIn and accelerators."},
+  {title:"Budget Analyst",pros:["Steady demand in government and corporate","Regular hours and realistic work-life balance","Clear structured deliverables each cycle","Ideal for organized long-term planners"],cons:["Slower paced than banking or investment","Limited upward mobility in some organizations","Less exposure to markets or strategy","Budget cycles can feel repetitive"],traits:"Organized systematic planners who enjoy building models for the future. Works best for people who value stability and thrive in structured environments.",path:"Bachelor in Finance Accounting or Economics → entry-level budget analyst role → government positions may require civil service exams."},
+  {title:"Actuary",pros:["Top-ranked for work-life balance in US","Highly specialized and deeply respected","Sophisticated mathematical problem solving daily","Extremely strong job security"],cons:["Full credentialing requires 7-10 years of exams","Narrow field mostly insurance and pensions","Less prestigious than banking or VC","Technical nature can feel isolating"],traits:"Mathematical minds passionate about statistics probability and modeling risk. Extremely patient long-term thinkers comfortable with ambiguity.",path:"Bachelor in Math or Statistics → begin actuarial exams in college → entry-level actuarial analyst → Associate then Fellow designation over 5-10 years."},
+];
+const AC = [
+  {title:"CPA — Certified Public Accountant",pros:["Most stable recession-proof credential in business","CPAs needed in every industry everywhere","Clear path to partnership and equity ownership","Globally recognized and deeply respected"],cons:["4 rigorous exams averaging 50% pass rate","Intense tax season 60-70 hour weeks January through April","150 college credit hours required more than standard degree","Continuing education required every two years"],traits:"Methodical ethical patient people with genuine appreciation for rules and structure. Strong ethics non-negotiable — CPAs have legal duties of accuracy and honesty.",path:"Bachelor in Accounting → 150 credit hours → pass all 4 CPA exam sections → 1-2 years supervised work experience → apply for state licensure."},
+  {title:"Tax Accountant",pros:["Consistent demand every year taxes never go away","Work independently at firm or in corporate tax","Detail-oriented work rewarding precision","Can specialize in high-value niches like international tax"],cons:["Intensely seasonal January through April is relentless","Tax law changes constantly requiring updates","Can feel narrow if you want variety","Must stay current on all major legislation"],traits:"Patient rule-following organized people who enjoy applying detailed regulations to real situations. Must stay calm under client pressure during tax season.",path:"Bachelor in Accounting → CPA license strongly preferred → specialize through firm experience in tax → senior tax accountant → manager → partner track."},
+  {title:"Forensic Accountant",pros:["Exciting investigative work never the same twice","Collaborate with FBI SEC and legal teams","High growing demand as fraud becomes more sophisticated","High-stakes cases carry recognition and meaning"],cons:["Cases involve emotionally heavy situations","Requires accounting and investigative mastery simultaneously","Court testimony required must be confident and unshakeable","Requires solid accounting experience first as stepping stone"],traits:"Curious investigative deeply ethical people who think like both accountant and detective simultaneously. Excellent written communication critical since findings become legal documents.",path:"Bachelor in Accounting → CPA → 3-5 years in public accounting audit → Certified Fraud Examiner (CFE) → forensic department at Big 4 firm or government agency."},
+  {title:"Auditor",pros:["External audit exposes you to many companies rapidly","Builds one of strongest accounting foundations available","High ethical responsibility gives real professional weight","Big 4 experience is career accelerator for almost any path"],cons:["Busy season involves long hours and heavy travel","Testing same controls repeatedly feels mechanical","Client relationships can be tense during examination","Path to partner typically 10-15 years"],traits:"Skeptical thorough professionally composed people comfortable asking hard questions and pushing back respectfully. Independence is both legal requirement and personal trait.",path:"Bachelor in Accounting → CPA → start at Big 4 or regional firm in audit → branch into internal audit IT audit or forensic audit over time."},
+  {title:"Bookkeeper",pros:["Excellent entry point into accounting no advanced degree needed","Remote and flexible work arrangements very common","Steady demand from small businesses needing affordable support","Can grow toward staff accountant or controller with more education"],cons:["Growth ceiling real without further education or credentials","Highly repetitive day-to-day work transactions and reconciliations","Compensation lower than CPA-level roles","Automation gradually reducing demand for manual bookkeeping"],traits:"Organized reliable consistent people who take satisfaction in accuracy. Works well for those who enjoy routine and helping small business owners understand their numbers.",path:"High school diploma + bookkeeping courses → QuickBooks ProAdvisor certification → entry-level bookkeeping → with more education grow toward staff accountant or controller."},
+  {title:"Corporate Finance Manager",pros:["Strategic role with direct input into major decisions","Variety from budgeting to M&A analysis and board presentations","Strong influence and visibility at executive level","Cross-functional work with operations HR sales and leadership"],cons:["Requires significant years of experience before reaching manager level","Internal politics challenging in large organizations","Highly stressful during acquisitions restructurings or missed earnings","Hours and pressure vary widely by company health"],traits:"Strategic thinkers who connect financial data to business decisions and communicate clearly to non-finance people. Must manage teams effectively and balance leadership with precision.",path:"Bachelor in Finance or Accounting → 4-6 years as financial analyst → MBA from strong program often accelerates jump → Finance Manager → Director → VP Finance → CFO track."},
+];
+const MH = [
+  {year:"1929",event:"The Great Crash",detail:"Black Tuesday Oct 29 — Dow fell 12% in one day. $30 billion evaporated triggering the Great Depression. Key figures: Charles Mitchell, Herbert Hoover. Unemployment hit 25%. Banks failed as depositors panicked."},
+  {year:"1987",event:"Black Monday",detail:"Dow plunged 22.6% in one day — largest single-day drop in history. Portfolio insurance and program trading amplified the crash into a feedback loop. Greenspan's Fed injected liquidity rapidly to prevent full collapse."},
+  {year:"2000",event:"Dot-Com Bubble Burst",detail:"NASDAQ peaked at 5,048 then lost 78% by 2002. Pets.com, Webvan, Kozmo.com collapsed. Amazon, Google, eBay survived. Over $5 trillion in market cap destroyed in two years."},
+  {year:"2008",event:"Global Financial Crisis",detail:"Lehman Brothers collapsed with $639B in assets. Subprime CDOs triggered systemic failure. TARP injected $700B. S&P 500 lost 57% peak-to-trough. Bernanke, Paulson, and Geithner led the response."},
+  {year:"2013",event:"Bitcoin Crosses $1,000",detail:"Bitcoin hit $1,000 for the first time. Mt. Gox handled 70% of trades before collapsing in 2014 — 850,000 BTC lost. Silk Road shut by FBI. Satoshi Nakamoto remains unknown."},
+  {year:"2017",event:"Crypto Bull Run",detail:"Bitcoin surged from $1,000 to $19,783. Ethereum ICO boom raised $5.6B. XRP gained 36,000%. Total crypto hit $830B before collapsing 80% in 2018."},
+  {year:"2020",event:"COVID Crash and Recovery",detail:"S&P 500 fell 34% in 33 days — fastest bear market ever. Fed cut rates to zero and launched $3T QE. Markets recovered in 5 months. Robinhood added 3M new investors. GameStop followed Jan 2021."},
+  {year:"2021",event:"NFT and Meme Stock Mania",detail:"GameStop surged 2,500% as WallStreetBets squeezed Melvin Capital. Beeple NFT sold for $69M. Dogecoin rose 12,000%. Coinbase IPO valued at $86B. El Salvador adopted Bitcoin as legal tender."},
+  {year:"2022",event:"Crypto Winter",detail:"Terra/LUNA collapsed wiping $60B. FTX (Sam Bankman-Fried) collapsed — $8B in customer funds misappropriated. Bitcoin fell from $68k to $15.7k. Celsius, Voyager, BlockFi all filed bankruptcy."},
+  {year:"2024",event:"Bitcoin ETF Approval",detail:"SEC approved spot Bitcoin ETFs from BlackRock IBIT and Fidelity FBTC. Bitcoin hit new ATH of $73,000. ETF inflows exceeded $50B within months. Ethereum spot ETF also approved June 2024."},
+];
+const STOCKS = [
+  {ticker:"AAPL",name:"Apple Inc.",base:178,vol:0.006},
+  {ticker:"TSLA",name:"Tesla Inc.",base:242,vol:0.016},
+  {ticker:"MSFT",name:"Microsoft Corp.",base:415,vol:0.005},
+  {ticker:"NVDA",name:"NVIDIA Corp.",base:875,vol:0.013},
+  {ticker:"AMZN",name:"Amazon.com",base:198,vol:0.008},
+  {ticker:"META",name:"Meta Platforms",base:512,vol:0.011},
+  {ticker:"GOOGL",name:"Alphabet Inc.",base:175,vol:0.007},
+];
+function generateDay(base,vol){
+  const pts=[];let p=base*(0.97+Math.random()*0.06);
+  for(let i=0;i<390;i++){
+    const vm=i/390<0.15?1.4:i/390>0.8?1.2:0.8;
+    p=Math.max(p*0.92,p+p*(Math.random()-0.49)*2*vol*vm);
+    pts.push(parseFloat(p.toFixed(2)));
+  }
+  return pts;
+}
+function toTime(idx){
+  const t=30+idx,h=9+Math.floor(t/60),m=t%60;
+  return `${h}:${m<10?"0":""}${m}${h<12?"AM":"PM"}`;
+}
+const EXCEL_TOPICS=[
+  {id:"sum",label:"SUM & Basic Math"},{id:"ifstmt",label:"IF Statements"},
+  {id:"vlookup",label:"VLOOKUP"},{id:"pivot",label:"Pivot Tables"},
+  {id:"charts",label:"Charts & Graphs"},{id:"conditional",label:"Conditional Formatting"},
+  {id:"indexmatch",label:"INDEX + MATCH"},{id:"sumif",label:"SUMIF / COUNTIF"},
+  {id:"financial",label:"PMT / NPV / IRR"},{id:"textfn",label:"TEXT Functions"},
+  {id:"dates",label:"Date Functions"},{id:"error",label:"IFERROR"},
+  {id:"array",label:"Array Formulas"},{id:"whatif",label:"Goal Seek / What-If"},
+  {id:"powerquery",label:"Power Query"},
+];
+const NAMES=["Jordan","Taylor","Morgan","Riley","Casey","Alex","Sam","Jamie","Drew","Quinn"];
+function rn(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function genScenario(id){
+  var all={
+    sum:{
+      what:"SUM adds up a range of numbers automatically. Instead of typing =A1+A2+A3+A4 you just write =SUM(A1:A4) and it handles any size range instantly.",
+      learn:[
+        {step:"1",title:"Click on an empty cell",body:"Click the cell where you want your total to appear. This is where the formula result will show up."},
+        {step:"2",title:"Type =SUM(",body:"Start every Excel formula with an equals sign. Then type SUM followed by an open parenthesis. Excel knows you are about to enter a range."},
+        {step:"3",title:"Select your range",body:"Click the first cell you want to add, hold shift, and click the last cell. You will see something like A2:A6 appear inside your formula. This means add everything from A2 through A6."},
+        {step:"4",title:"Close and press Enter",body:"Type a closing parenthesis ) and press Enter. Excel instantly calculates the total. If you change any number in your range the total updates automatically."},
+        {step:"5",title:"Copy the formula down",body:"Click the cell with your SUM formula. See the small green square in the bottom right corner of the cell? Drag it down to apply the same formula to rows below. Excel adjusts the range automatically for each row."},
+      ],
+      title:"Monthly Budget",
+      story:"Track your monthly spending across 4 categories. Fill in your weekly amounts and see your totals.",
+      headers:["Category","Week 1","Week 2","Week 3","Total"],
+      rows:[
+        {label:"Rent",    vals:[800,800,800], formula:"=SUM(B2:D2)"},
+        {label:"Food",    vals:[120,95,110],  formula:"=SUM(B3:D3)"},
+        {label:"Gas",     vals:[60,45,70],    formula:"=SUM(B4:D4)"},
+        {label:"Fun",     vals:[80,110,90],   formula:"=SUM(B5:D5)"}
+      ]
+    },
+    ifstmt:{
+      what:"IF checks a condition and returns one value if true and another if false. Example: =IF(score>=60, Pass, Fail) — great for automating decisions across thousands of rows.",
+      learn:[
+        {step:"1",title:"Understand the IF structure",body:"Every IF formula has three parts: =IF(condition, value if true, value if false). Think of it like asking a question. IF this is true THEN show this OTHERWISE show that."},
+        {step:"2",title:"Type =IF( in your cell",body:"Click the result cell and type =IF( — Excel will show you a hint about the arguments it needs. You need to fill in the condition first."},
+        {step:"3",title:"Write your condition",body:"Type your condition using comparison operators. B2>=60 means the value in B2 is greater than or equal to 60. You can also use = for equals, < for less than, > for greater than, and <> for not equal."},
+        {step:"4",title:"Add your two outcomes",body:"After the condition type a comma. Then type what to show if true in quotes like Pass. Type another comma. Then type what to show if false like Fail. Close with a parenthesis."},
+        {step:"5",title:"Nest IFs for multiple outcomes",body:"To get A B C grades you nest IFs inside each other. =IF(B2>=90, A, IF(B2>=80, B, IF(B2>=70, C, F))). Each IF handles one grade level and falls through to the next if that condition is not met."},
+      ],
+      title:"Student Grades",
+      story:"You are grading 4 students. Enter their scores and see who passes (60 or above) and who fails.",
+      headers:["Student","Score","Result"],
+      rows:[
+        {label:"Alex",    vals:[85], formula:"Pass if 60 or above, Fail if below"},
+        {label:"Sam",     vals:[52], formula:"Pass if 60 or above, Fail if below"},
+        {label:"Jordan",  vals:[91], formula:"Pass if 60 or above, Fail if below"},
+        {label:"Riley",   vals:[67], formula:"Pass if 60 or above, Fail if below"}
+      ]
+    },
+    vlookup:{
+      what:"VLOOKUP searches the first column of a table for a value and returns data from another column in that same row. Perfect for looking up prices, names, or departments by ID.",
+      learn:[
+        {step:"1",title:"Understand the 4 arguments",body:"VLOOKUP needs 4 pieces of information: =VLOOKUP(what to find, where to look, which column to return, exact or approximate match). You will always use FALSE for the last argument to get an exact match."},
+        {step:"2",title:"Set up your lookup table",body:"Your data table must have the thing you are searching for in the FIRST column. If you want to look up employees by ID then ID must be column A. VLOOKUP always searches the leftmost column first."},
+        {step:"3",title:"Write the formula",body:"Click your result cell and type =VLOOKUP( then click the cell containing what you want to find. Type a comma. Then select your entire data table. Type a comma."},
+        {step:"4",title:"Choose the column number",body:"Count which column holds the data you want to return. If your table is ID in column A, Name in column B, Department in column C — and you want the department — type 3 because it is the third column. Type a comma then FALSE."},
+        {step:"5",title:"Lock your table reference",body:"Add dollar signs to your table range so it does not shift when you copy the formula down. Change A2:C6 to dollar sign A dollar sign 2 colon dollar sign C dollar sign 6. Now you can copy the formula to other cells safely."},
+      ],
+      title:"Employee Lookup",
+      story:"Your manager asks what department employee 1042 is in. Enter an employee ID and VLOOKUP finds their department instantly.",
+      headers:["Employee ID","Name","Department"],
+      rows:[
+        {label:"1001", vals:["Alex"],   formula:"Finance"},
+        {label:"1042", vals:["Jordan"], formula:"Marketing"},
+        {label:"1087", vals:["Sam"],    formula:"Engineering"},
+        {label:"1103", vals:["Riley"],  formula:"HR"},
+        {label:"1201", vals:["Casey"],  formula:"Sales"}
+      ]
+    },
+    pivot:{
+      what:"Pivot Tables summarize large datasets instantly. Drag and drop fields to see totals, averages, or counts grouped by any category — no formulas needed.",
+      learn:[
+        {step:"1",title:"Make sure your data has headers",body:"Every column in your data must have a header in row 1. Region, Product, Sales Amount for example. Pivot Tables use these headers as the field names you drag around."},
+        {step:"2",title:"Click anywhere inside your data",body:"Click any single cell inside your data table. Excel will automatically detect the full range when you insert the Pivot Table. You do not need to select all the data first."},
+        {step:"3",title:"Insert the Pivot Table",body:"Go to the Insert tab at the top of Excel and click PivotTable. A dialog box appears asking where to put it. Choose New Worksheet and click OK. Excel creates a blank Pivot Table on a new sheet."},
+        {step:"4",title:"Drag fields to build your summary",body:"You will see a panel on the right with your column headers listed. Drag Region to the Rows area. Drag Sales Amount to the Values area. Excel instantly shows you total sales by region."},
+        {step:"5",title:"Change how values are calculated",body:"By default the Values area shows a SUM. Click the dropdown arrow next to your field in the Values area to change it to Average, Count, Max, or Min. You can also drag multiple fields to create more detailed breakdowns."},
+      ],
+      title:"Sales by Region",
+      story:"You have 6 rows of sales data. Enter the sales amounts and practice reading the data to find which region sold the most.",
+      headers:["Region","Product","Sales Amount"],
+      rows:[
+        {label:"East",  vals:["Widget A"], formula:"4200"},
+        {label:"West",  vals:["Widget B"], formula:"3100"},
+        {label:"East",  vals:["Widget B"], formula:"5600"},
+        {label:"North", vals:["Widget A"], formula:"2800"},
+        {label:"West",  vals:["Widget A"], formula:"6100"},
+        {label:"East",  vals:["Widget A"], formula:"3900"}
+      ]
+    },
+    charts:{
+      what:"Charts turn raw numbers into visual stories. A line chart shows trends over time. A bar chart compares categories. A pie chart shows proportions. Always label your axes.",
+      learn:[
+        {step:"1",title:"Select your data including headers",body:"Click the top left cell of your data and drag to the bottom right including the column headers. If you have Month, Revenue, and Expenses — select all three columns and all rows of data."},
+        {step:"2",title:"Insert a chart",body:"Go to the Insert tab and look at the Charts section. For trends over time use Line Chart. For comparing categories use Bar or Column Chart. For proportions use Pie Chart. Click your choice and Excel inserts it instantly."},
+        {step:"3",title:"Pick the right chart subtype",body:"Excel gives you several variations. For line charts choose the simple Line option not the 3D one. For bar charts choose Clustered Column to show bars side by side. Simpler is almost always better."},
+        {step:"4",title:"Add a title and labels",body:"Click on your chart to select it. Click the plus icon that appears on the right edge. Check Chart Title and Axis Titles. Click on the title text to edit it. Always give your chart a clear descriptive title."},
+        {step:"5",title:"Move and resize your chart",body:"Click and drag the chart to position it on your sheet. Drag the corner handles to resize it. You can also right click the chart and choose Move Chart to place it on its own dedicated sheet for presentations."},
+      ],
+      title:"Revenue vs Expenses",
+      story:"Track 6 months of revenue and expenses. Calculate the profit for each month by subtracting expenses from revenue.",
+      headers:["Month","Revenue","Expenses","Profit"],
+      rows:[
+        {label:"January",  vals:[42000,31000], formula:"11000"},
+        {label:"February", vals:[48000,33000], formula:"15000"},
+        {label:"March",    vals:[55000,38000], formula:"17000"},
+        {label:"April",    vals:[51000,36000], formula:"15000"},
+        {label:"May",      vals:[63000,41000], formula:"22000"},
+        {label:"June",     vals:[71000,44000], formula:"27000"}
+      ]
+    },
+    conditional:{
+      what:"Conditional Formatting automatically changes cell colors based on rules you set. You can make overdue tasks turn red and completed ones turn green without any manual work.",
+      learn:[
+        {step:"1",title:"Select the cells you want to format",body:"Click and drag to select the cells you want to color-code automatically. You can select a single column like the Status column or multiple columns at once."},
+        {step:"2",title:"Open Conditional Formatting",body:"Go to the Home tab at the top of Excel. Look for the Styles section and click Conditional Formatting. A dropdown menu appears with several options. Choose Highlight Cell Rules for basic color coding."},
+        {step:"3",title:"Set your first rule",body:"Choose Text Contains from the submenu. A dialog box appears. Type Overdue in the text box. Choose Red Fill with Dark Red Text from the dropdown. Click OK. Any cell containing the word Overdue now turns red automatically."},
+        {step:"4",title:"Add more rules",body:"Go back to Conditional Formatting and add another rule. Choose Text Contains again. This time type Complete and choose Green Fill. Add a third rule for In Progress with Yellow Fill. Now your spreadsheet is a traffic light."},
+        {step:"5",title:"Manage and edit your rules",body:"Go to Conditional Formatting and click Manage Rules to see all your rules at once. You can change the order, edit the conditions, or delete rules. Rules at the top of the list take priority over rules below them."},
+      ],
+      title:"Project Status",
+      story:"You manage 5 projects. Read the status column and identify which tasks need attention. In Excel you would set rules to color-code these automatically.",
+      headers:["Task","Due Date","Status","Progress"],
+      rows:[
+        {label:"Q1 Report",    vals:["Mar 15","Complete"],    formula:"100%"},
+        {label:"Client Deck",  vals:["Apr 2","Overdue"],      formula:"60%"},
+        {label:"Budget Review",vals:["Apr 10","In Progress"], formula:"45%"},
+        {label:"Team Survey",  vals:["Apr 20","Not Started"], formula:"0%"},
+        {label:"Audit Prep",   vals:["May 1","In Progress"],  formula:"30%"}
+      ]
+    },
+    indexmatch:{
+      what:"INDEX+MATCH is more powerful than VLOOKUP. MATCH finds the position of a value in a list. INDEX returns the value at that position. Together they can look up in any direction and never break when you add columns.",
+      learn:[
+        {step:"1",title:"Understand INDEX first",body:"INDEX returns a value from a list based on its position number. =INDEX(A2:A10, 3) returns whatever is in the third row of that range. Think of it like asking what is in position number 3 of this list."},
+        {step:"2",title:"Understand MATCH",body:"MATCH finds the position of a value in a list. =MATCH(USB Hub, A2:A10, 0) returns the number of the row where USB Hub appears. The zero at the end means find an exact match. These two functions are always used together."},
+        {step:"3",title:"Combine them",body:"Put MATCH inside INDEX to look up any value. =INDEX(B2:B10, MATCH(D2, A2:A10, 0)). This says: find D2 in column A, get its row number, then return the value at that same row number from column B."},
+        {step:"4",title:"Why it beats VLOOKUP",body:"VLOOKUP breaks if you insert a new column because it uses a fixed column number like 3. INDEX+MATCH uses the actual column range so adding columns never breaks your formula. It can also search right to left which VLOOKUP cannot do."},
+        {step:"5",title:"Lock your ranges",body:"Add dollar signs to your lookup ranges so they do not shift when you copy the formula. Change A2:A10 to dollar sign A dollar sign 2 colon dollar sign A dollar sign 10. This is called an absolute reference and keeps your formula pointing to the right data."},
+      ],
+      title:"Product Price Lookup",
+      story:"A customer wants to know the price of a specific product. Enter the product name you want to find and look up its price from the table.",
+      headers:["Product","Price","Stock"],
+      rows:[
+        {label:"Laptop Pro",     vals:[1299], formula:"24 in stock"},
+        {label:"Wireless Mouse", vals:[49],   formula:"150 in stock"},
+        {label:"USB Hub",        vals:[39],   formula:"200 in stock"},
+        {label:"Monitor 4K",     vals:[599],  formula:"18 in stock"},
+        {label:"Keyboard",       vals:[89],   formula:"75 in stock"}
+      ]
+    },
+    sumif:{
+      what:"SUMIF adds up only the rows that meet a condition. COUNTIF counts only the rows that meet a condition. Both are essential for summarizing data without building a full Pivot Table.",
+      learn:[
+        {step:"1",title:"Understand SUMIF arguments",body:"SUMIF needs three things: =SUMIF(range to check, condition to match, range to add up). The range to check is your Region column. The condition is East. The range to add up is your Sales column."},
+        {step:"2",title:"Write your first SUMIF",body:"Click an empty cell and type =SUMIF( then select your Region column like B2:B6. Type a comma. Type East in quotes. Type a comma. Then select your Sales column like C2:C6. Close with a parenthesis and press Enter."},
+        {step:"3",title:"Make the condition dynamic",body:"Instead of typing East in quotes you can reference another cell. =SUMIF(B2:B6, E2, C2:C6) where E2 contains the word East. Now you can change E2 to West and the total updates automatically without editing the formula."},
+        {step:"4",title:"Use COUNTIF the same way",body:"COUNTIF works exactly like SUMIF but only needs two arguments. =COUNTIF(C2:C6, condition). To count reps with sales over 20000 you would type the condition as greater than 20000. COUNTIF counts how many rows match your condition."},
+        {step:"5",title:"Use SUMIFS for multiple conditions",body:"When you need to match more than one condition use SUMIFS. =SUMIFS(sales range, region range, East, product range, Widget A) adds up only rows where Region is East AND Product is Widget A at the same time."},
+      ],
+      title:"Regional Sales",
+      story:"Your manager needs total East region sales. Fill in the sales amounts and add up only the East region rows manually to practice what SUMIF does automatically.",
+      headers:["Sales Rep","Region","Sales"],
+      rows:[
+        {label:"Alex",   vals:["East"],  formula:"32000"},
+        {label:"Sam",    vals:["West"],  formula:"18000"},
+        {label:"Jordan", vals:["East"],  formula:"45000"},
+        {label:"Riley",  vals:["North"], formula:"27000"},
+        {label:"Casey",  vals:["West"],  formula:"15000"}
+      ]
+    },
+    financial:{
+      what:"PMT calculates the fixed payment for a loan. NPV calculates the present value of future cash flows. IRR finds the interest rate that makes an investment break even. These are the core financial functions used in banking and investing.",
+      learn:[
+        {step:"1",title:"Understand PMT arguments",body:"PMT needs three things: =PMT(rate, nper, pv). Rate is the interest rate per period — for monthly payments divide the annual rate by 12. Nper is the total number of payments. Pv is the present value which is the loan amount entered as a negative number."},
+        {step:"2",title:"Calculate monthly payment",body:"For an 18000 dollar loan at 6 percent annual interest over 60 months type =PMT(6%/12, 60, -18000). The 6%/12 converts the annual rate to monthly. The negative sign on 18000 tells Excel you are borrowing money and the result will be positive."},
+        {step:"3",title:"Calculate total paid and total interest",body:"Multiply your PMT result by the number of payments to get total paid. =PMT(6%/12,60,-18000)*60. Then subtract the original loan amount from total paid to get total interest. This shows you the true cost of borrowing."},
+        {step:"4",title:"Understand NPV",body:"NPV tells you what a series of future cash flows is worth today. =NPV(discount rate, cash flow year 1, cash flow year 2, ...). If the NPV is positive the investment is worth making at that discount rate. If negative it is not worth it."},
+        {step:"5",title:"Understand IRR",body:"IRR finds the interest rate that makes an investment break even. =IRR(range of cash flows starting with the initial investment as negative). If the IRR is higher than your cost of capital the investment is profitable."},
+      ],
+      title:"Loan Calculator",
+      story:"You want to borrow 18000 dollars for a car at 6% annual interest over 60 months. Fill in what you think the monthly payment would be then check it.",
+      headers:["Input","Value","What it Means"],
+      rows:[
+        {label:"Loan Amount",   vals:[18000], formula:"Total you are borrowing"},
+        {label:"Annual Rate",   vals:[6],     formula:"Percent interest per year"},
+        {label:"Term (months)", vals:[60],    formula:"How long to pay it back"},
+        {label:"Monthly Payment",vals:[0],   formula:"=PMT(6%/12, 60, -18000)"}
+      ]
+    },
+    textfn:{
+      what:"TEXT functions clean and transform text data. PROPER capitalizes names. TRIM removes extra spaces. UPPER and LOWER change case. CONCAT joins cells together. Essential for cleaning imported data.",
+      learn:[
+        {step:"1",title:"Clean up capitalization with PROPER",body:"=PROPER(A2) converts any text to Title Case where the first letter of each word is capitalized. JOHN SMITH becomes John Smith. MARKETING DEPARTMENT becomes Marketing Department. Perfect for cleaning imported name lists."},
+        {step:"2",title:"Remove extra spaces with TRIM",body:"=TRIM(A2) removes all leading spaces before text, all trailing spaces after text, and reduces multiple spaces between words to a single space. This is often the first thing you do when cleaning data from another system."},
+        {step:"3",title:"Change case with UPPER and LOWER",body:"=UPPER(A2) converts everything to ALL CAPS. =LOWER(A2) converts everything to all lowercase. These are useful for standardizing data so that East and EAST and east all become the same value before running SUMIF or VLOOKUP."},
+        {step:"4",title:"Join cells with CONCAT",body:"=CONCAT(A2, B2) joins the values from A2 and B2 together. To add a space between them use =CONCAT(A2, space in quotes, B2). You can join as many cells as you want. This is useful for combining first name and last name columns into one full name column."},
+        {step:"5",title:"Extract parts of text with LEFT and RIGHT",body:"=LEFT(A2, 3) returns the first 3 characters from the left side of a cell. =RIGHT(A2, 4) returns the last 4 characters. These are useful for extracting area codes from phone numbers or year from a date code like 2024-Q1."},
+      ],
+      title:"Data Cleanup",
+      story:"Your database imported messy customer data. Practice identifying what function would fix each problem in the table below.",
+      headers:["Raw Data","Problem","Function to Use","Expected Result"],
+      rows:[
+        {label:"JOHN SMITH",        vals:["All caps"],      formula:"=PROPER(A2)"},
+        {label:"sarah@email.com",   vals:["Extra spaces"],  formula:"=TRIM(A3)"},
+        {label:"MARKETING",         vals:["Need lowercase"],formula:"=LOWER(A4)"},
+        {label:"john",              vals:["Need uppercase"],formula:"=UPPER(A5)"},
+        {label:"John plus Smith",   vals:["Join two cells"],formula:"=CONCAT(A6,B6)"}
+      ]
+    },
+    dates:{
+      what:"Date functions let Excel calculate time automatically. TODAY() returns todays date. DATEDIF calculates the difference between two dates. You can build trackers that update themselves every single day.",
+      learn:[
+        {step:"1",title:"Use TODAY() for dynamic dates",body:"=TODAY() returns todays date and updates automatically every time you open the file. You never need to type a date manually. Use it in formulas like =B2-TODAY() to calculate how many days remain until a deadline in B2."},
+        {step:"2",title:"Calculate days between dates",body:"Simply subtract one date from another. =B2-A2 gives you the number of days between the date in A2 and the date in B2. Excel stores dates as numbers internally so subtraction works perfectly. Format the result cell as a Number not a Date."},
+        {step:"3",title:"Use DATEDIF for months and years",body:"=DATEDIF(start date, end date, unit) calculates the difference in the unit you choose. Use Y for complete years, M for complete months, D for days. This is useful for calculating how long an employee has worked or how old someone is."},
+        {step:"4",title:"Flag overdue items automatically",body:"Combine date math with IF to create an automatic status flag. =IF(B2 is less than TODAY(), Overdue, On Track) checks if a deadline has already passed. This updates every day automatically so your tracker is always current."},
+        {step:"5",title:"Add or subtract time periods",body:"Use EDATE to move a date forward or backward by months. =EDATE(A2, 3) returns the date 3 months after the date in A2. Use WORKDAY to add business days only skipping weekends. =WORKDAY(A2, 10) gives you the date 10 working days from now."},
+      ],
+      title:"Deadline Tracker",
+      story:"You have 5 project deadlines coming up. Enter how many days you think remain for each one then check your estimates.",
+      headers:["Task","Due Date","Days Remaining","Status"],
+      rows:[
+        {label:"Submit Report",  vals:["Aug 15 2025"], formula:"Calculate from today"},
+        {label:"Client Meeting", vals:["Sep 22 2025"], formula:"Calculate from today"},
+        {label:"Pay Invoice",    vals:["Oct 1 2025"],  formula:"Calculate from today"},
+        {label:"File Report",    vals:["Oct 15 2025"], formula:"Calculate from today"},
+        {label:"Team Review",    vals:["Nov 1 2025"],  formula:"Calculate from today"}
+      ]
+    },
+    error:{
+      what:"IFERROR catches errors in formulas and replaces them with something friendly. Instead of seeing a red error code you can show 0, a dash, or a custom message. Professional spreadsheets always use IFERROR.",
+      learn:[
+        {step:"1",title:"Recognize common Excel errors",body:"Excel shows different error codes when formulas break. DIV/0 means you divided by zero. N/A means a lookup found no match. VALUE means wrong data type. REF means a cell reference is broken. NAME means Excel does not recognize a formula name. IFERROR catches all of them."},
+        {step:"2",title:"Wrap any formula in IFERROR",body:"=IFERROR(your formula, what to show instead). Place your entire original formula inside IFERROR as the first argument. The second argument is what to display when an error occurs. You can use 0, a dash, or any text in quotes."},
+        {step:"3",title:"Use 0 for math calculations",body:"When your formula does multiplication or addition use 0 as the fallback. =IFERROR(B2*C2, 0) means if the price or quantity is missing show 0 instead of an error. This keeps your totals working correctly even with incomplete data."},
+        {step:"4",title:"Use descriptive text for lookups",body:"When your formula is a VLOOKUP or INDEX MATCH use a friendly message as the fallback. =IFERROR(VLOOKUP(A2,table,2,FALSE), Not found) shows Not found when an ID does not exist in your table instead of showing N/A."},
+        {step:"5",title:"Never nest IFERROR unnecessarily",body:"Only wrap the formula that might error. Do not wrap your entire sheet in IFERROR because it can hide real mistakes in your logic. Use it specifically for cells where you expect certain values might be missing, like optional data fields or lookup tables that are still being built."},
+      ],
+      title:"Error Protection",
+      story:"Some products are missing prices. Without protection the Revenue column shows errors. Fill in the Revenue column with what you think each should show.",
+      headers:["Product","Price","Quantity","Revenue"],
+      rows:[
+        {label:"Widget A", vals:[49,10],   formula:"490"},
+        {label:"Widget B", vals:["",8],    formula:"Should show 0 not error"},
+        {label:"Widget C", vals:[99,5],    formula:"495"},
+        {label:"Widget D", vals:["",12],   formula:"Should show 0 not error"},
+        {label:"Widget E", vals:[29,20],   formula:"580"}
+      ]
+    },
+    array:{
+      what:"Array formulas and SUMPRODUCT let you calculate across multiple conditions at once. Instead of filtering and summing separately you can write one formula that does both. Powerful for dashboards.",
+      learn:[
+        {step:"1",title:"Understand how arrays work",body:"An array formula performs a calculation on a whole range of cells at once instead of just one cell. When you multiply two arrays together Excel multiplies each pair of values and returns an array of results. SUMPRODUCT then adds all those results together."},
+        {step:"2",title:"Build a SUMPRODUCT formula",body:"=SUMPRODUCT((A2:A7 equals East) times (B2:B7 equals Widget A) times C2:C7). Each condition in parentheses creates an array of TRUE and FALSE values. TRUE counts as 1 and FALSE counts as 0. Multiplying by 0 cancels out rows that do not match."},
+        {step:"3",title:"Why this beats filtering manually",body:"With SUMPRODUCT you get your answer in one cell with one formula. No filtering, no pivot table, no helper columns. The formula updates instantly when your data changes. It works even inside a dashboard where you cannot move or filter your data."},
+        {step:"4",title:"Add more conditions easily",body:"To add a third condition just multiply another array onto the end. =SUMPRODUCT((region equals East) times (product equals Widget A) times (year equals 2024) times sales). You can stack as many conditions as you need with no practical limit."},
+        {step:"5",title:"Use SUMPRODUCT to count matches",body:"Omit the final values array to count instead of sum. =SUMPRODUCT((A2:A7 equals East) times (B2:B7 equals Widget A)) counts how many rows match both conditions. This gives you a COUNTIFS-style result in one clean formula."},
+      ],
+      title:"Multi-Condition Total",
+      story:"You need total sales for East region Widget A only. Fill in the sales column and manually add up the rows that match both conditions to practice what SUMPRODUCT does.",
+      headers:["Region","Product","Sales"],
+      rows:[
+        {label:"East",  vals:["Widget A"], formula:"4200"},
+        {label:"West",  vals:["Widget B"], formula:"3100"},
+        {label:"East",  vals:["Widget B"], formula:"5600"},
+        {label:"North", vals:["Widget A"], formula:"2800"},
+        {label:"West",  vals:["Widget A"], formula:"6100"},
+        {label:"East",  vals:["Widget A"], formula:"3900"}
+      ]
+    },
+    whatif:{
+      what:"Goal Seek and What-If Analysis let you work backwards. Instead of asking what is the profit if I sell 1000 units you ask how many units do I need to hit a target profit. Excel finds the answer automatically.",
+      learn:[
+        {step:"1",title:"Set up your model first",body:"Before using Goal Seek you need a formula that connects your inputs to your output. Build a simple model where changing one input cell changes a result cell through a formula. Break-even analysis is a classic example."},
+        {step:"2",title:"Open Goal Seek",body:"Go to the Data tab at the top of Excel. Click What-If Analysis in the Forecast section. Choose Goal Seek from the dropdown. A small dialog box appears with three fields you need to fill in."},
+        {step:"3",title:"Set the three fields",body:"Set Cell is your result cell — the one containing your formula. To Value is the target number you want to reach. By Changing Cell is the input cell Excel is allowed to adjust. Click OK and Excel solves it instantly."},
+        {step:"4",title:"Use Data Tables for multiple scenarios",body:"A Data Table lets you see results for many different input values at once. Set up one column of possible input values. Click the range and go to Data, What-If Analysis, Data Table. Enter your input cell reference and Excel fills in all the results automatically."},
+        {step:"5",title:"Use Scenario Manager for named scenarios",body:"Go to Data, What-If Analysis, Scenario Manager to save and compare multiple named scenarios. Create a Best Case with optimistic numbers, a Base Case with realistic numbers, and a Worst Case. Switch between them instantly to see how your model responds."},
+      ],
+      title:"Break-Even Analysis",
+      story:"Your startup has 50000 in fixed costs. Each unit sells for 75 dollars and costs 30 to make. Fill in how many units you think you need to break even.",
+      headers:["Input","Value","Output","Formula Result"],
+      rows:[
+        {label:"Fixed Costs",        vals:[50000], formula:"All costs that never change"},
+        {label:"Price per Unit",     vals:[75],    formula:"What you charge per sale"},
+        {label:"Variable Cost",      vals:[30],    formula:"What each unit costs to make"},
+        {label:"Break-Even Units",   vals:[0],     formula:"Fixed Costs divided by (Price minus Variable Cost)"}
+      ]
+    },
+    powerquery:{
+      what:"Power Query connects to data sources and transforms data automatically. You can combine multiple files, remove duplicates, split columns, and clean data — then refresh everything with one click when new data arrives.",
+      learn:[
+        {step:"1",title:"Open Power Query",body:"Go to the Data tab at the top of Excel and click Get Data. You can connect to Excel files, CSV files, databases, web pages, and many other sources. Choose From File then From Excel to start with a simple spreadsheet import."},
+        {step:"2",title:"Load your data into the editor",body:"After selecting your file Excel opens the Power Query Editor. This is where all your transformations happen. You see a preview of your data on the right and a list of Applied Steps on the left that records every change you make."},
+        {step:"3",title:"Clean your data in the editor",body:"Right click any column header to see cleaning options. Remove Duplicates removes repeated rows. Split Column separates text by a delimiter like a comma or space. Change Type converts columns to the right data type like Number or Date."},
+        {step:"4",title:"Append multiple files",body:"To combine 3 monthly files into one go to Home in the editor and click Append Queries. Select your other files. Power Query stacks them on top of each other into one unified table. This works even if the files have slightly different column orders."},
+        {step:"5",title:"Load and refresh",body:"When you are done transforming your data click Close and Load to bring it into Excel as a table. Next month when new data arrives just right click the table and choose Refresh. Power Query replays every transformation step automatically in seconds."},
+      ],
+      title:"Combined Sales Report",
+      story:"Three monthly files have been combined into one clean dataset using Power Query. Study the structure and fill in the Net Revenue column by subtracting Returns from Sales.",
+      headers:["Month","Region","Sales","Returns","Net Revenue"],
+      rows:[
+        {label:"January",  vals:["East",42000,1200],  formula:"40800"},
+        {label:"January",  vals:["West",38000,900],   formula:"37100"},
+        {label:"February", vals:["East",45000,1500],  formula:"43500"},
+        {label:"February", vals:["West",41000,800],   formula:"40200"},
+        {label:"March",    vals:["East",51000,1100],  formula:"49900"},
+        {label:"March",    vals:["West",44000,1300],  formula:"42700"}
+      ]
+    }
+  };
+  return all[id]||all.sum;
+}
+ 
+const CPA={
+  far:{name:"FAR",full:"Financial Accounting & Reporting",color:"#1d4ed8",emoji:"📒",hours:"150-200 hrs",pass:"44%",
+    desc:"The largest and most difficult CPA section. Covers financial statements, governmental accounting, nonprofit accounting, and consolidations.",
+    topics:[{n:"Financial Statements",d:"Income statement, balance sheet, cash flows. GAAP principles, revenue recognition ASC 606, lease accounting ASC 842."},{n:"Governmental Accounting",d:"Fund accounting, GASB standards, government-wide vs fund financial statements, budgetary accounting."},{n:"Nonprofit Accounting",d:"FASB ASC 958, net assets with and without donor restrictions, contribution revenue, functional expense reporting."},{n:"Consolidations",d:"Business combinations ASC 805, VIEs ASC 810, purchase price allocation, goodwill, non-controlling interests."},{n:"Inventory and Fixed Assets",d:"FIFO, LIFO, weighted average, lower of cost or NRV. Depreciation: straight-line, MACRS, double-declining."}],
+    cards:[{q:"What is the matching principle?",a:"Expenses should be recognized in the same period as the revenues they helped generate — regardless of when cash is paid."},{q:"What does ASC 606 govern?",a:"Revenue recognition from contracts with customers. The 5-step model: identify contract, identify obligations, determine price, allocate price, recognize revenue."},{q:"What is goodwill?",a:"Excess of purchase price over fair value of net identifiable assets in a business combination. Tested annually for impairment under ASC 350."},{q:"Direct vs indirect method for cash flows?",a:"Direct shows actual cash receipts and payments. Indirect starts with net income and adjusts for non-cash items. Both reach the same operating cash flow."},{q:"GASB vs FASB?",a:"GASB sets standards for state and local governments. FASB sets standards for private sector entities. Both operate under GAAP but have meaningfully different rules."}],
+    terms:[{t:"Accrual Basis",d:"Revenue recognized when earned and expenses when incurred regardless of cash timing. Required for GAAP financial statements."},{t:"ASC 842",d:"Lease accounting standard requiring most leases on the balance sheet as right-of-use assets and lease liabilities."},{t:"Net Realizable Value",d:"Estimated selling price minus costs to complete and sell. Used for the lower-of-cost-or-NRV inventory test."},{t:"Deferred Tax",d:"Temporary difference between book income and taxable income creating future tax obligations or benefits."}],
+    tips:["FAR has the most content — start here and give it the most study time","Governmental accounting is unique and heavily tested — treat it as a separate subject","Task-based simulations count for 50% of your score — practice them every day","Use mnemonics for the cash flow indirect method adjustments","Harder adaptive questions mean you are doing well — stay confident"]},
+  aud:{name:"AUD",full:"Auditing & Attestation",color:"#065f46",emoji:"🔍",hours:"100-120 hrs",pass:"47%",
+    desc:"Covers audit procedures, professional standards, ethics, and attestation engagements. Very heavy on judgment-based questions about auditor reasoning.",
+    topics:[{n:"Audit Planning and Risk",d:"The audit risk model: AR = IR x CR x DR. Materiality, understanding the entity, risk assessment procedures, fraud risk factors."},{n:"Internal Controls",d:"COSO framework with 5 components, control environment, control activities, monitoring. Testing design vs operating effectiveness."},{n:"Audit Evidence",d:"Substantive procedures, analytical procedures, confirmation, inspection, observation, inquiry. Sufficient appropriate evidence."},{n:"Professional Standards and Ethics",d:"AICPA Code of Professional Conduct, independence rules, PCAOB standards for public companies, GAGAS for government."},{n:"Audit Reporting",d:"Unmodified vs modified opinions, emphasis-of-matter paragraphs, going concern, key audit matters in annual reports."}],
+    cards:[{q:"What is the audit risk model?",a:"Audit Risk = Inherent Risk x Control Risk x Detection Risk. Auditors adjust Detection Risk by changing the nature, timing, and extent of substantive procedures."},{q:"What is materiality in auditing?",a:"The threshold above which a misstatement would influence the economic decisions of a reasonable user of financial statements. Both quantitative and qualitative."},{q:"Qualified vs adverse opinion?",a:"Qualified: statements fairly presented EXCEPT for a specific material misstatement. Adverse: statements do NOT fairly present the financial position overall."},{q:"What does auditor independence mean?",a:"Independence in fact means actual objectivity. Independence in appearance means a reasonable third party perceives no impairment. Both required."},{q:"Five COSO components?",a:"Control Environment, Risk Assessment, Control Activities, Information and Communication, and Monitoring Activities. Foundation of any internal control assessment."}],
+    terms:[{t:"Inherent Risk",d:"The susceptibility of an assertion to material misstatement assuming no related internal controls exist. Cannot be changed by the auditor."},{t:"Engagement Letter",d:"Written agreement between auditor and client establishing scope, responsibilities, fee arrangements, and limitations."},{t:"Sampling Risk",d:"Risk that auditor conclusion based on sample differs from conclusion if the entire population were tested."},{t:"PCAOB",d:"Public Company Accounting Oversight Board — established by SOX 2002 to oversee audits of public companies registered with the SEC."}],
+    tips:["AUD rewards understanding WHY procedures are performed — not just memorizing what they are","The audit risk model drives the entire exam — master it completely and early","Ethics and independence questions are essentially free points — know the AICPA Code cold","AUD uses tricky best-answer style questions — read every answer choice carefully","Build exam stamina by practicing MCQs in sets of 30 or more without stopping"]},
+  reg:{name:"REG",full:"Taxation & Regulation",color:"#7c2d12",emoji:"📋",hours:"100-130 hrs",pass:"59%",
+    desc:"Covers federal taxation for individuals, corporations, partnerships, and estates plus business law. Requires heavy memorization of tax rates and legal rules.",
+    topics:[{n:"Individual Taxation",d:"Gross income inclusions and exclusions, above and below the line deductions, filing status, AMT, tax credits, capital gains rates. Form 1040 structure."},{n:"Corporate Taxation",d:"C-Corp tax treatment, dividends received deduction, net operating loss rules, corporate AMT, S-Corp elections and rules."},{n:"Partnership Taxation",d:"Pass-through taxation, outside vs inside basis, partnership distributions, hot assets triggering ordinary income."},{n:"Estate and Gift Tax",d:"Annual exclusion $18,000 in 2024, lifetime exemption, step-up in basis at death, marital deduction, computing taxable estate."},{n:"Business Law",d:"Contract formation elements, agency relationships, business entity types, bankruptcy chapters 7/11/13, secured transactions UCC Article 9."}],
+    cards:[{q:"Standard deduction for single filer 2024?",a:"$14,600 for single filers. $29,200 for married filing jointly. $21,900 for head of household. These adjust annually for inflation."},{q:"Long-term capital gains rate?",a:"0%, 15%, or 20% depending on taxable income. Assets held more than 12 months qualify for these preferential rates versus ordinary income rates up to 37%."},{q:"What is the dividends received deduction?",a:"Allows C-Corporations to deduct 50%, 65%, or 100% of dividends received from domestic corporations depending on ownership percentage."},{q:"Five elements of a valid contract?",a:"Offer, Acceptance, Consideration, Capacity, and Legality. All five must be present simultaneously for a contract to be legally enforceable."},{q:"What is an S-Corporation?",a:"Pass-through entity avoiding double taxation. Income flows to shareholders personal returns. Limited to 100 shareholders, one class of stock, US citizens only."}],
+    terms:[{t:"AGI",d:"Adjusted Gross Income — gross income minus above-the-line deductions. Baseline for many limitations, phase-outs, and credits."},{t:"Passive Activity Loss",d:"Losses from activities where taxpayer does not materially participate — can only offset passive income."},{t:"Circular 230",d:"IRS regulations governing tax professionals before the IRS covering competence, ethics, and conflicts of interest."},{t:"UCC Article 9",d:"Uniform Commercial Code rules governing secured transactions in personal property — creation, perfection, and priority of security interests."}],
+    tips:["REG has the highest pass rate but enormous content — start early and study consistently","Individual tax rules are the foundation — master them first before moving to corporate and partnership","Business law covers 10-20% of exam — many candidates skip it and deeply regret it","Build a tax formula: Gross Income to AGI to Taxable Income to Tax — memorize it","Know the 2024 tax rate brackets and capital gains thresholds since they appear on every exam"]},
+  bec:{name:"ISC/BAR",full:"Business Analysis & Reporting",color:"#4c1d95",emoji:"💼",hours:"80-110 hrs",pass:"61%",
+    desc:"Covers financial statement analysis, managerial accounting, economics, IT controls, and corporate governance. Restructured in 2024 into BAR and ISC discipline sections.",
+    topics:[{n:"Financial Statement Analysis",d:"Liquidity, solvency, profitability, and efficiency ratios. DuPont decomposition of ROE, trend analysis, common-size statements, earnings quality."},{n:"Managerial and Cost Accounting",d:"Job order vs process costing, standard costing, price and efficiency variance analysis, activity-based costing, contribution margin."},{n:"Economics",d:"Microeconomic concepts including elasticity and market structures. Macroeconomic including GDP, inflation, monetary vs fiscal policy."},{n:"IT and Controls",d:"IT general controls, application controls, cybersecurity frameworks NIST, SOC 1 and SOC 2 reports, system development lifecycle."},{n:"Corporate Governance",d:"Board responsibilities, audit committee function, SOX requirements and Section 404, COSO enterprise risk management."}],
+    cards:[{q:"What is contribution margin?",a:"Revenue minus all variable costs. Contribution Margin per unit = Selling Price minus Variable Cost per unit. Foundation of break-even analysis."},{q:"What is a favorable cost variance?",a:"When actual costs are LESS than standard costs, or actual revenue MORE than budgeted. Unfavorable goes in the opposite direction."},{q:"DuPont formula for ROE?",a:"ROE = Net Profit Margin x Asset Turnover x Equity Multiplier. Decomposes return on equity into three specific driver components."},{q:"What does SOX Section 404 require?",a:"Management must assess and report on effectiveness of internal controls over financial reporting. External auditor must also attest to this assessment."},{q:"Absorption vs variable costing?",a:"Absorption includes fixed manufacturing overhead in product cost and is required for GAAP. Variable treats fixed overhead as period cost used internally."}],
+    terms:[{t:"Break-Even Point",d:"Sales volume where total revenue equals total costs and profit is zero. Break-Even Units = Fixed Costs divided by Contribution Margin per unit."},{t:"Current Ratio",d:"Current Assets divided by Current Liabilities. Measures short-term liquidity. Above 1.0 means company can cover current obligations."},{t:"EBITDA",d:"Earnings Before Interest Taxes Depreciation and Amortization. Proxy for operating cash flow used in valuations and lending covenants."},{t:"SOX",d:"Sarbanes-Oxley Act 2002 passed after Enron and WorldCom. Establishes internal control requirements and criminal penalties for fraud."}],
+    tips:["BAR builds on old BEC and adds deeper financial analysis — study both areas equally","ISC focuses on IT controls and cybersecurity which are increasingly tested in 2024","Financial ratios appear on almost every exam — memorize all four ratio categories cold","Economics questions are often common sense — trust your reasoning and do not overthink","Know SOX Sections 302 and 404 specifically since they appear on nearly every exam"]},
+};
+const CPA_HOW=[
+  {step:"1",title:"Meet Education Requirements",detail:"Most states require 150 semester credit hours — more than a standard 4-year bachelor degree of 120 hours. Many candidates complete a 5th year or master in accounting to reach 150 hours."},
+  {step:"2",title:"Apply to Your State Board",detail:"Each state has its own Board of Accountancy. Apply through NASBA at nasba.org. Pay the application fee and receive your Notice to Schedule for each exam section."},
+  {step:"3",title:"Pass All 4 Exam Sections",detail:"Pass FAR, AUD, REG, and one discipline section — all within an 18-month rolling window. Each section scored 0-99, requires 75 to pass. Sections taken at Prometric testing centers year-round."},
+  {step:"4",title:"Complete Work Experience",detail:"Most states require 1-2 years of accounting work experience under a licensed CPA. The supervising CPA must verify and sign off on your experience hours."},
+  {step:"5",title:"Pass the Ethics Exam",detail:"Most states require passing the AICPA Ethics Exam — an open-book exam on the Code of Professional Conduct. Generally straightforward but required for licensure."},
+  {step:"6",title:"Apply for Licensure",detail:"Submit your complete application with proof of education, passing scores, work experience, and ethics exam. Pay the licensing fee. Once approved you are a licensed CPA."},
+  {step:"7",title:"Maintain Your License",detail:"CPAs must complete 40 CPE hours per year or 80 per 2-year period depending on state. Ethics CPE usually required annually. License must be renewed on schedule set by your state board."},
+];
+ 
+async function ai(sys,msg,max){
+  const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:max||800,system:sys,messages:[{role:"user",content:msg}]})});
+  const d=await r.json();
+  if(d.error)throw new Error(d.error); return d.content?d.content.map(c=>c.text||"").join(""):"";
+ 
+}
+export default function PaKid(){
+  const[screen,setScreen]=useState("terms");
+  const[agreed,setAgreed]=useState(false);
+  const[plan,setPlan]=useState(null);
+  const[theme,setTheme]=useState("pink");
+  const[username,setUsername]=useState("");
+  const[level,setLevel]=useState(null);
+  const[tab,setTab]=useState("finance");
+    const[showLimit,setShowLimit]=useState(false);
+  const[showAnswers,setShowAnswers]=useState(false);
+  const[showLearn,setShowLearn]=useState(false);
+  const[aiScenarios,setAiScenarios]=useState({});
+  const[aiScenariosLoading,setAiScenariosLoading]=useState(false);
+  const uRef=useRef({count:0,start:Date.now()});
+  const[udisplay,setUdisplay]=useState(0);
+ 
+  const[chatMsgs,setChatMsgs]=useState([]);
+  const[chatIn,setChatIn]=useState("");
+  const[chatLoad,setChatLoad]=useState(false);
+  const[expanded,setExpanded]=useState(null);
+  const[filter,setFilter]=useState("all");
+ 
+  const[selExcel,setSelExcel]=useState(null);
+  const[scenario,setScenario]=useState(null);
+  const[cells,setCells]=useState({});
+  const[exFb,setExFb]=useState("");
+  const[exFbLoad,setExFbLoad]=useState(false);
+ 
+  const[simStock,setSimStock]=useState(null);
+  const[simPrices,setSimPrices]=useState([]);
+  const[simIdx,setSimIdx]=useState(0);
+  const[simShares,setSimShares]=useState(10);
+  const[simRun,setSimRun]=useState(false);
+  const[simBuy,setSimBuy]=useState(null);
+  const[simTrades,setSimTrades]=useState([]);
+  const[simReveal,setSimReveal]=useState(false);
+  const[simOver,setSimOver]=useState(false);
+  const[simFb,setSimFb]=useState("");
+  const[simFbLoad,setSimFbLoad]=useState(false);
+  const simT=useRef(null);
+ 
+  const[histIn,setHistIn]=useState("");
+  const[histOut,setHistOut]=useState("");
+  const[histLoad,setHistLoad]=useState(false);
+  const[histQ,setHistQ]=useState("");
+ 
+  const[cpaSec,setCpaSec]=useState("overview");
+  const[cpaCardIdx,setCpaCardIdx]=useState(0);
+  const[cpaFlipped,setCpaFlipped]=useState(false);
+  const[cpaPQ,setCpaPQ]=useState("");
+  const[cpaPA,setCpaPA]=useState("");
+  const[cpaPLoad,setCpaPLoad]=useState(false);
+  const[cpaAskIn,setCpaAskIn]=useState("");
+  const[cpaAskOut,setCpaAskOut]=useState("");
+  const[cpaAskLoad,setCpaAskLoad]=useState(false);
+  const[cpaAutoQs,setCpaAutoQs]=useState({far:"",aud:"",reg:"",bec:""});
+  const[cpaAutoShow,setCpaAutoShow]=useState({far:false,aud:false,reg:false,bec:false});
+  const[cpaAutoLoad,setCpaAutoLoad]=useState(false);
+ 
+  const chatEnd=useRef(null);
+  const T=THEMES[theme];
+  const getTrialDaysLeft=()=>{
+    try{
+      const saved=localStorage.getItem("pakid_sub");
+      if(!saved)return null;
+      const sub=JSON.parse(saved);
+      if(sub.plan!=="trial")return null;
+      const daysLeft=7-Math.floor((Date.now()-sub.since)/(1000*60*60*24));
+      return Math.max(0,daysLeft);
+    }catch(e){return null;}
+  };
+  const trialDaysLeft=getTrialDaysLeft();
+ 
+  const lim=()=>PLAN_LIMITS[plan]||5;
+  const cnt=()=>{
+    const d=uRef.current;
+    if((Date.now()-d.start)/3600000>=9){uRef.current={count:0,start:Date.now()};}
+    return uRef.current.count;
+  };
+  const bump=()=>{cnt();uRef.current.count+=1;setUdisplay(uRef.current.count);};
+  const atLim=()=>cnt()>=lim();
+  const tryAI=()=>{if(atLim()){setShowLimit(true);return false;}bump();return true;};
+  const resetTime=()=>{
+    const ms=9*3600000-(Date.now()-uRef.current.start);
+    if(ms<=0)return null;
+    return `${Math.floor(ms/3600000)}h ${Math.floor((ms%3600000)/60000)}m`;
+  };
+ 
+  useEffect(()=>{
+    // Check if returning from Stripe payment
+    const params=new URLSearchParams(window.location.search);
+    const sessionId=params.get("session_id");
+    const planParam=params.get("plan");
+    if(sessionId){
+      fetch("/api/verify?session_id="+sessionId)
+        .then(r=>r.json())
+        .then(data=>{
+          if(data.success){
+            const sub={plan:planParam||"monthly",since:Date.now(),email:data.email||""};
+            localStorage.setItem("pakid_sub",JSON.stringify(sub));
+            setPlan(planParam||"monthly");
+            setScreen("usersetup");
+            window.history.replaceState({},"","/");
+          }
+        })
+        .catch(()=>{});
+    }
+    // Check if already subscribed from previous session
+    else{
+      try{
+        const saved=localStorage.getItem("pakid_sub");
+        if(saved){
+          const sub=JSON.parse(saved);
+          const daysSince=(Date.now()-sub.since)/(1000*60*60*24);
+          // If trial and more than 7 days, force back to subscribe
+          if(sub.plan==="trial"&&daysSince>7){
+            localStorage.removeItem("pakid_sub");
+          } else {
+            setPlan(sub.plan);
+            setScreen("usersetup");
+          }
+        }
+      }catch(e){}
+    }
+  },[]);
+ 
+  useEffect(()=>{if(chatEnd.current)chatEnd.current.scrollIntoView({behavior:"smooth"});},[chatMsgs]);
+ 
+  useEffect(()=>{
+    if(simRun&&simIdx<simPrices.length-1){
+      simT.current=setInterval(()=>{
+        setSimIdx(i=>{
+          if(i>=simPrices.length-2){setSimRun(false);setSimOver(true);clearInterval(simT.current);return simPrices.length-1;}
+          return i+1;
+        });
+      },1000);
+    }else{clearInterval(simT.current);}
+    return()=>clearInterval(simT.current);
+  },[simRun,simPrices]);
+ 
+  useEffect(()=>{
+    if(screen!=="main")return;
+    setAiScenariosLoading(true);
+    var topics=EXCEL_TOPICS.map(function(t){return t;});
+    var generated={};
+    var remaining=topics.length;
+    topics.forEach(function(t){
+      var sys="You are a professional Excel trainer. Generate a fresh practice scenario for the Excel skill: "+t.label+". Return ONLY a valid JSON object with these exact keys: title (short scenario name, 4 words max), story (1 sentence business situation using a specific industry), rows (array of row objects, each with label string and vals array of 2-4 numbers). Use realistic business numbers. No markdown, no explanation, just raw JSON.";
+      var msg="Generate a new scenario for "+t.label+". Use a random industry: pick one of retail, healthcare, real estate, restaurant, sports team, school, construction, or tech startup. Keep the same number of rows as this base: "+JSON.stringify(genScenario(t.id).rows.map(function(r){return {label:r.label,vals:r.vals};}));
+      ai(sys,msg,400).then(function(text){
+        try{
+          var clean=text.replace(/```json|```/g,"").trim();
+          var parsed=JSON.parse(clean);
+          generated[t.id]=parsed;
+        }catch(e){
+          generated[t.id]=null;
+        }
+        remaining--;
+        if(remaining===0){
+          setAiScenarios(Object.assign({},generated));
+          setAiScenariosLoading(false);
+        }
+      }).catch(function(){
+        generated[t.id]=null;
+        remaining--;
+        if(remaining===0){
+          setAiScenarios(Object.assign({},generated));
+          setAiScenariosLoading(false);
+        }
+      });
+    });
+  },[screen]);
+ 
+  useEffect(()=>{
+    if(screen!=="main")return;
+    setCpaAutoLoad(true);
+    const sids=["far","aud","reg","bec"];
+    Promise.all(sids.map(async sid=>{
+      const s=CPA[sid];
+      const topic=s.topics[Math.floor(Math.random()*s.topics.length)].n;
+      try{
+        const text=await ai(
+          "You are a CPA exam instructor. Generate one realistic CPA-style MCQ. Format EXACTLY: QUESTION: [question] A) [opt] B) [opt] C) [opt] D) [opt] ANSWER: [letter]) EXPLANATION: [2 sentences why correct and why others wrong]",
+          `Generate one CPA practice question for ${s.name} (${s.full}). Topic: ${topic}. Realistic CPA exam difficulty.`,450
+        );
+        setCpaAutoQs(p=>({...p,[sid]:text}));
+      }catch(e){setCpaAutoQs(p=>({...p,[sid]:"Connection error. Try again later."}));}
+    })).then(()=>setCpaAutoLoad(false));
+  },[screen]);
+ 
+  const startSim=()=>{
+    const s=STOCKS[Math.floor(Math.random()*STOCKS.length)];
+    setSimStock(s);setSimPrices(generateDay(s.base,s.vol));
+    setSimIdx(0);setSimBuy(null);setSimTrades([]);setSimFb("");
+    setSimRun(false);setSimOver(false);setSimReveal(false);
+  };
+  const buyNow=()=>{if(simRun&&simBuy===null)setSimBuy(simIdx);};
+  const sellNow=async()=>{
+    if(simBuy===null||!simRun)return;
+    if(!tryAI())return;
+    clearInterval(simT.current);setSimRun(false);
+    const bp=simPrices[simBuy],sp=simPrices[simIdx];
+    const pnl=parseFloat(((sp-bp)*simShares).toFixed(2));
+    const pct=parseFloat((((sp-bp)/bp)*100).toFixed(2));
+    const newT=[...simTrades,{buyIdx:simBuy,sellIdx:simIdx,buyPrice:bp,sellPrice:sp,pnl,pct}];
+    setSimTrades(newT);setSimBuy(null);
+    const tot=newT.reduce((s,t)=>s+t.pnl,0).toFixed(2);
+    setSimFbLoad(true);
+    try{
+      const text=await ai(
+        "You are PaKid Pro Int. trading coach. Give detailed constructive feedback in 4 labeled parts: 1) Trade Summary 2) What You Did Well 3) What To Improve 4) One Key Lesson. Under 200 words. Educational only, not financial advice.",
+        `Trade #${newT.length} on ${simStock.ticker} (${simStock.name}). Bought $${bp.toFixed(2)} at ${toTime(simBuy)}, sold $${sp.toFixed(2)} at ${toTime(simIdx)}. Held ${simIdx-simBuy} minutes. ${simShares} shares. P&L: $${pnl} (${pct}%). Total P&L today: $${tot}. Day range: $${Math.min(...simPrices).toFixed(2)} to $${Math.max(...simPrices).toFixed(2)}.`,800
+      );
+      setSimFb(text);
+    }catch(e){setSimFb("Trade recorded! Study your entry and exit timing carefully. Educational only.");}
+    setSimFbLoad(false);
+  };
+  const sendChat=async(pre)=>{
+    const msg=pre||chatIn.trim();if(!msg)return;if(!tryAI())return;
+    const lv=level||"highschool";
+    const newM=[...chatMsgs,{role:"user",content:msg}];
+    setChatMsgs(newM);setChatIn("");setChatLoad(true);
+    try{
+      const lvStr=lv==="highschool"?"Use simple fun language like a friendly teacher. No jargon. Make concepts relatable.":lv==="college"?"Use proper academic financial terminology. Reference textbook concepts and GAAP.":"Use advanced institutional-grade language, quantitative frameworks, and professional concepts.";
+      const reply=await ai(`You are PaKid Pro Int., a financial education assistant. User level: ${lv}. ${lvStr} Cover finance, accounting, Excel, and markets. Educational only, not financial advice.`,msg,800);
+      setChatMsgs([...newM,{role:"assistant",content:reply||"No response received."}]);
+    }catch(e){setChatMsgs([...newM,{role:"assistant",content:"Connection error. Please try again."}]);}
+    setChatLoad(false);
+  };
+  const loadExcel=function(t){
+    setSelExcel(t);setExFb("");setShowAnswers(false);setShowLearn(false);
+    var sc=genScenario(t.id);setScenario(sc);
+    var init={};
+    sc.rows.forEach(function(row,ri){
+      row.vals.forEach(function(val,vi){
+        init[ri+"-"+vi]=String(val);
+      });
+    });
+    setCells(init);
+  };
+  const checkExcel=async()=>{
+    if(!scenario||!selExcel)return;if(!tryAI())return;
+    setExFbLoad(true);
+    const lv=level||"highschool";
+    const filled=Object.entries(cells).map(function(kv){return kv[0]+"="+kv[1];}).join(", ");
+    const expected=scenario.rows.map(function(row,i){return row.label+": values="+row.vals.join(",")+", answer="+row.formula;}).join(" | ");
+    const lvStr=lv==="highschool"?"Simple encouraging language, plain terms, very friendly and supportive.":lv==="college"?"Proper Excel terminology and business context, reference function arguments.":"Precise technical language, formula architecture and professional best practices.";
+    try{
+      const text=await ai("You are PaKid Pro Int. Excel coach. "+lvStr+" Give feedback in 3 clearly labeled parts: 1) What They Got Right 2) What Needs Fixing with exact corrections 3) One Tip to Go Further. Be encouraging and specific.","Topic: "+selExcel.label+". Scenario: "+scenario.title+". What the student is learning: "+scenario.what+" Student entered: "+(filled||"nothing yet")+". Expected answers: "+expected,600);
+      setExFb(text);
+    }catch(e){setExFb("Good effort! Review your answers against the green cells and try again.");}
+    setExFbLoad(false);
+  };
+  const searchHist=async()=>{
+    if(!histIn.trim())return;if(!tryAI())return;
+    setHistQ(histIn);setHistLoad(true);setHistOut("");
+    try{
+      const text=await ai("You are PaKid Pro Int. market history expert. Answer questions about financial history, crypto, stock market events, economic crises, famous investors. Include key names, dollar amounts, dates, causes, effects, and lessons. Educational content only.",`Tell me about: ${histIn}. Include key people, companies, dollar figures, dates, causes, effects, and one key lesson. Under 280 words.`,800);
+      setHistOut(text);
+    }catch(e){setHistOut("Connection error. Please try again.");}
+    setHistLoad(false);
+  };
+  const genCPAQ=async sid=>{
+    if(!tryAI())return;
+    setCpaPLoad(true);setCpaPQ("");setCpaPA("");
+    const s=CPA[sid];
+    const topic=s.topics[Math.floor(Math.random()*s.topics.length)].n;
+    try{
+      const text=await ai("You are a CPA exam prep instructor. Generate one realistic CPA-style MCQ. Format: QUESTION: [question] A) [opt] B) [opt] C) [opt] D) [opt] ANSWER: [letter]) EXPLANATION: [2 sentences why correct and why others wrong]",`Generate one CPA practice question for ${s.name} (${s.full}). Topic: ${topic}. Realistic CPA exam difficulty.`,500);
+      const ai2=text.indexOf("ANSWER:");
+      if(ai2>-1){setCpaPQ(text.slice(0,ai2).trim());setCpaPA(text.slice(ai2).trim());}
+      else setCpaPQ(text);
+    }catch(e){setCpaPQ("Connection error. Please try again.");}
+    setCpaPLoad(false);
+  };
+  const askCPA=async()=>{
+    if(!cpaAskIn.trim())return;if(!tryAI())return;
+    setCpaAskLoad(true);setCpaAskOut("");
+    try{
+      const text=await ai("You are a CPA exam expert and accounting professor. Answer questions about CPA exam content, study strategies, accounting concepts, and exam structure clearly and accurately. Educational purposes only.",cpaAskIn,700);
+      setCpaAskOut(text);
+    }catch(e){setCpaAskOut("Connection error. Please try again.");}
+    setCpaAskLoad(false);
+  };
+  const renderChart=()=>{
+    if(!simPrices.length)return null;
+    const display=simReveal?simPrices:simPrices.slice(0,simIdx+1);
+    const step=Math.max(1,Math.floor(display.length/120));
+    const samp=display.filter((_,i)=>i%step===0);
+    const mn=Math.min(...samp)*0.999,mx=Math.max(...samp)*1.001;
+    const W=300,H=110,P=10;
+    const xp=i=>P+(i/(simPrices.length-1))*(W-P*2);
+    const yp=v=>P+(1-(v-mn)/(mx-mn||1))*(H-P*2);
+    const pts=samp.map((v,i)=>`${P+i/(samp.length-1||1)*(W-P*2)},${yp(v)}`).join(" ");
+    const cp=simPrices[simIdx];
+    const color=simBuy!==null?(cp>=simPrices[simBuy]?"#16a34a":"#dc2626"):(cp>=simPrices[0]?"#16a34a":"#dc2626");
+    const tot=simTrades.reduce((s,t)=>s+t.pnl,0);
+    const lbl=simBuy!==null?`Open: ${cp>=simPrices[simBuy]?"+":""}$${((cp-simPrices[simBuy])*simShares).toFixed(2)}`:simTrades.length>0?`Day P&L: ${tot>=0?"+":""}$${tot.toFixed(2)}`:`${(((cp-simPrices[0])/simPrices[0])*100).toFixed(2)}%`;
+    return(<div style={{background:T.card,borderRadius:12,padding:12,marginBottom:10}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+        <div><span style={{fontWeight:900,fontSize:16,color:T.accent}}>{simStock.ticker}</span><span style={{fontSize:11,color:T.sub,marginLeft:6}}>{simStock.name}</span></div>
+        <div style={{textAlign:"right"}}><div style={{fontWeight:800,fontSize:17,color:T.text}}>${cp.toFixed(2)}</div><div style={{fontWeight:700,fontSize:12,color}}>{lbl}</div></div>
+      </div>
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{display:"block"}}>
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="2"/>
+        {simBuy!==null&&<circle cx={xp(simBuy)} cy={yp(simPrices[simBuy])} r="5" fill="#16a34a" stroke="#fff" strokeWidth="1.5"/>}
+        <circle cx={xp(simIdx)} cy={yp(cp)} r="4" fill={color} stroke="#fff" strokeWidth="1.5"/>
+        {simTrades.map((t,i)=><g key={i}><circle cx={xp(t.buyIdx)} cy={yp(t.buyPrice)} r="4" fill="#16a34a" stroke="#fff" strokeWidth="1"/><circle cx={xp(t.sellIdx)} cy={yp(t.sellPrice)} r="4" fill="#dc2626" stroke="#fff" strokeWidth="1"/></g>)}
+      </svg>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:T.sub,marginTop:4}}>
+        <span>9:30 AM</span>
+        <span style={{fontWeight:600,color:simReveal?"#f59e0b":T.sub}}>{simReveal?"👁 FULL DAY":toTime(simIdx)}</span>
+        <span>4:00 PM</span>
+      </div>
+    </div>);
+  };
+  const holiday=getHolidayEmoji();
+  const TABS=[{id:"finance",icon:"💰",label:"Finance"},{id:"accounting",icon:"📊",label:"Accounting"},{id:"excel",icon:"📋",label:"Excel"},{id:"invest",icon:"📈",label:"Invest"},{id:"history",icon:"🏛️",label:"History"},{id:"cpa",icon:"🎓",label:"CPA"}];
+  const careers=filter==="accounting"?AC:filter==="finance"?FC:[...FC,...AC];
+  if(screen==="terms")return(<div style={{background:T.bg,minHeight:"100vh",display:"flex",flexDirection:"column",fontFamily:"Georgia,serif"}}>
+    <div style={{background:T.accent,color:"#fff",padding:"24px 20px",textAlign:"center"}}>
+      <div style={{fontSize:20,fontWeight:800,letterSpacing:3,textTransform:"uppercase"}}>PAKID PRO</div>
+      <div style={{fontSize:11,opacity:0.6,marginTop:4,letterSpacing:1}}>Financial Education</div>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:"14px 16px",fontSize:10,lineHeight:1.85,color:T.text,whiteSpace:"pre-wrap"}}>{TERMS}</div>
+    <div style={{padding:"14px 16px",background:T.card,borderTop:`2px solid ${T.accent}`}}>
+      <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",fontSize:13,color:T.text}}>
+        <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} style={{marginTop:3,width:18,height:18,accentColor:T.accent}}/>
+        <span>I agree to all terms. I understand PaKid Pro Int. <strong>does not guarantee accuracy</strong> and provides <strong>no financial advice.</strong></span>
+      </label>
+      <button onClick={()=>agreed&&setScreen("subscribe")} style={{marginTop:14,width:"100%",padding:"15px 0",borderRadius:14,border:"none",background:agreed?T.accent:"#e5e7eb",color:agreed?"#fff":"#9ca3af",fontWeight:700,fontSize:15,cursor:agreed?"pointer":"not-allowed",letterSpacing:0.5}}>
+        {agreed?"AGREE AND CONTINUE":"Check the box above to continue"}
+      </button>
+    </div>
+  </div>);
+ 
+  if(screen==="subscribe")return(<div style={{background:T.bg,minHeight:"100vh",fontFamily:"Helvetica Neue,sans-serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"22px 16px",overflowY:"auto"}}>
+    <div style={{fontSize:28,fontWeight:800,color:T.text,letterSpacing:-1,marginTop:10}}>PaKid <span style={{color:T.accent}}>Pro</span></div>
+    <div style={{fontSize:13,color:T.sub,fontWeight:400,marginBottom:20,letterSpacing:0.2}}>Learn Finance. Build Your Future.</div>
+    <div style={{width:"100%",maxWidth:420,background:T.card,borderRadius:14,padding:14,marginBottom:14,marginTop:10}}>
+      <div style={{fontWeight:700,color:T.accent,marginBottom:10,fontSize:13}}>Everything included in every plan:</div>
+      {[["📈","Market Simulations","Live second-by-second stock trading with detailed AI feedback on every trade"],["🎓","CPA Exam Prep","All 4 sections with flashcards, key terms, tips, and AI practice questions that regenerate every session"],["📋","Excel Mastery","15 topics with interactive scenarios that generate fresh questions every time you open the app"],["💰","Finance and Accounting","12 career deep-dives, full financial statements, and AI chat on any topic"],["🏛️","Market History","Search any financial event and get a full AI breakdown of key people, companies, and lessons"],["🔄","Fresh Content Daily","Excel scenarios and CPA questions regenerate automatically — never the same session twice"]].map(([icon,title,desc],i)=>(
+        <div key={i} style={{display:"flex",gap:10,marginBottom:8,paddingBottom:8,borderBottom:i<5?`1px solid ${T.bg}`:"none",alignItems:"flex-start"}}>
+          <span style={{fontSize:18}}>{icon}</span>
+          <div><div style={{fontWeight:700,fontSize:12,color:T.text}}>{title}</div><div style={{fontSize:11,color:T.sub,lineHeight:1.5,marginTop:1}}>{desc}</div></div>
+        </div>
+      ))}
+    </div>
+    {[{id:"trial",label:"7-Day Free Trial",price:"FREE",sub:"Then $9.98/mo — cancel before trial ends to pay nothing",badge:"START FREE",e:"🎁",qs:"5 questions / 9 hrs"},{id:"monthly",label:"Monthly Plan",price:"$9.98",sub:"per month — cancel anytime",badge:"POPULAR",e:"📅",qs:"15 questions / 9 hrs"},{id:"yearly",label:"Yearly Plan",price:"$99.99",sub:"per year — save 17% vs monthly",badge:"BEST VALUE",e:"⭐",qs:"50 questions / 9 hrs"}].map(p=>(
+      <div key={p.id} onClick={()=>setPlan(p.id)} style={{width:"100%",maxWidth:420,marginBottom:12,padding:"16px 18px",borderRadius:16,background:plan===p.id?T.accent:T.card,color:plan===p.id?"#fff":T.text,border:`2px solid ${plan===p.id?T.accent:"#ddd"}`,cursor:"pointer",position:"relative"}}>
+        <span style={{position:"absolute",top:-10,right:14,background:plan===p.id?"#fff":T.accent,color:plan===p.id?T.accent:"#fff",fontSize:10,fontWeight:800,padding:"3px 10px",borderRadius:20}}>{p.badge}</span>
+        <div style={{fontWeight:800,fontSize:16}}>{p.e} {p.label}</div>
+        <div style={{fontSize:24,fontWeight:900,margin:"4px 0"}}>{p.price}</div>
+        <div style={{fontSize:12,opacity:0.8,marginBottom:6}}>{p.sub}</div>
+        <div style={{fontSize:11,fontWeight:700,background:"rgba(0,0,0,0.08)",borderRadius:8,padding:"4px 10px",display:"inline-block"}}>🤖 {p.qs}</div>
+      </div>
+    ))}
+    <div style={{width:"100%",maxWidth:420,background:T.card,borderRadius:14,padding:14,marginBottom:12}}>
+      <div style={{fontWeight:700,color:T.accent,marginBottom:8,fontSize:13}}>AI Question Limits — Full Transparency</div>
+      <div style={{fontSize:11,color:T.sub,marginBottom:10,lineHeight:1.5}}>Every AI chat, Excel feedback, trade analysis, history search, and CPA question counts. Limits reset every 9 hours.</div>
+      {[["🎁 Free Trial","5 questions","every 9 hours"],["📅 Monthly $9.98","15 questions","every 9 hours"],["⭐ Yearly $99.99","50 questions","every 9 hours"]].map(([l,lim,r],i)=>(
+        <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:i<2?`1px solid ${T.bg}`:"none"}}>
+          <span style={{fontSize:12,color:T.text,fontWeight:600}}>{l}</span>
+          <div style={{textAlign:"right"}}><div style={{fontSize:12,fontWeight:800,color:T.accent}}>{lim}</div><div style={{fontSize:10,color:T.sub}}>{r}</div></div>
+        </div>
+      ))}
+    </div>
+ 
+      <button onClick={async function(){
+        if(!plan)return;
+        if(plan==="trial"){
+          // Trial still goes through Stripe so they enter card and get charged after 7 days
+          try{
+            const res=await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan:"trial"})});
+            const data=await res.json();
+            if(data.url){window.location.href=data.url;}
+            else{alert("Trial checkout error: "+(data.error||"unknown"));}
+          }catch(e){alert("Trial network error: "+e.message);}
+          return;
+        }
+        try{
+          const res=await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan:plan})});
+          const data=await res.json();
+          if(data.url){window.location.href=data.url;}
+          else{alert("Error: "+(data.error||"unknown"));}
+        }catch(e){alert("Error: "+e.message);}
+      }} style={{width:"100%",maxWidth:420,padding:"14px 0",borderRadius:14,border:"none",background:plan?T.accent:"#ccc",color:"#fff",fontWeight:800,fontSize:16,cursor:plan?"pointer":"not-allowed",marginBottom:8}}>
+      {plan?(plan==="trial"?"START FREE TRIAL":"SUBSCRIBE NOW"):"Select a Plan First"}
+    </button>
+    <div style={{fontSize:11,color:T.sub,textAlign:"center",marginBottom:20}}>Secure · Cancel anytime · No hidden fees</div>
+  </div>);
+ 
+  if(screen==="usersetup")return(<div style={{background:T.bg,minHeight:"100vh",fontFamily:"Helvetica Neue,sans-serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:26}}>
+    <div style={{fontSize:26,fontWeight:800,color:T.text,letterSpacing:-0.5,marginBottom:4}}>Welcome to <span style={{color:T.accent}}>PaKid Pro</span></div>
+    <div style={{fontSize:13,color:T.text,marginBottom:24,textAlign:"center"}}>Let us personalize your experience</div>
+    <div style={{width:"100%",maxWidth:400}}>
+      <div style={{fontSize:11,color:T.sub,fontWeight:700,marginBottom:5}}>YOUR NAME OR USERNAME</div>
+      <input placeholder="What should we call you?" value={username} onChange={e=>setUsername(e.target.value)} style={{width:"100%",padding:"12px 14px",borderRadius:12,border:`2px solid ${T.accent}`,background:T.card,color:T.text,fontSize:15,marginBottom:20,boxSizing:"border-box"}}/>
+      <div style={{fontSize:11,color:T.sub,fontWeight:700,marginBottom:10}}>I AM CURRENTLY A...</div>
+      {[{id:"highschool",label:"High School Student",desc:"Simple clear lessons — money basics made fun and easy to understand"},{id:"college",label:"College Student",desc:"Academic-level content using terminology professors and employers expect"},{id:"freerange",label:"Free Range Learner",desc:"No limits — advanced topics, complex frameworks, and deep dives"}].map(l=>(
+        <div key={l.id} onClick={()=>setLevel(l.id)} style={{padding:"14px 16px",borderRadius:12,background:level===l.id?T.accent:T.card,color:level===l.id?"#fff":T.text,border:`2px solid ${level===l.id?T.accent:"#ddd"}`,marginBottom:10,cursor:"pointer"}}>
+          <div style={{fontWeight:700,fontSize:14}}>{l.label}</div>
+          <div style={{fontSize:12,opacity:0.8,marginTop:2}}>{l.desc}</div>
+        </div>
+      ))}
+      <button onClick={()=>username&&level&&setScreen("main")} style={{marginTop:12,width:"100%",padding:"15px 0",borderRadius:14,border:"none",background:username&&level?T.accent:"#e5e7eb",color:username&&level?"#fff":"#9ca3af",fontWeight:700,fontSize:15,cursor:username&&level?"pointer":"not-allowed",letterSpacing:0.5}}>LETS GO</button>
+    </div>
+  </div>);
+  return(<div style={{background:T.bg,minHeight:"100vh",fontFamily:"Helvetica Neue,sans-serif",display:"flex",flexDirection:"column",maxWidth:700,margin:"0 auto"}}>
+    {showLimit&&(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+      <div style={{background:T.card,borderRadius:20,padding:28,maxWidth:340,width:"100%",textAlign:"center"}}>
+        <div style={{width:56,height:56,borderRadius:16,background:T.chip,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 16px",border:"1px solid "+T.border}}>🔒</div>
+        <div style={{fontWeight:700,fontSize:18,color:T.text,marginBottom:6,letterSpacing:-0.3}}>Limit Reached</div>
+        <div style={{fontSize:13,color:T.text,marginBottom:12}}>You have used your <strong>{lim()}</strong> AI questions for this 9-hour period.</div>
+        {resetTime()&&<div style={{background:T.bg,borderRadius:12,padding:12,marginBottom:12,borderLeft:`4px solid ${T.accent}`}}><div style={{fontSize:11,color:T.sub}}>RESETS IN</div><div style={{fontWeight:900,fontSize:22,color:T.accent}}>{resetTime()}</div></div>}
+        <div style={{background:T.bg,borderRadius:12,padding:12,marginBottom:14,textAlign:"left"}}>
+          <div style={{fontWeight:700,color:T.accent,marginBottom:6,fontSize:12}}>Upgrade for more questions:</div>
+          {[["Free Trial","5 / 9 hrs"],["Monthly $9.98","15 / 9 hrs"],["Yearly $99.99","50 / 9 hrs"]].map(([l,r],i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:12,borderBottom:i<2?`1px solid ${T.card}`:""}}>
+              <span style={{color:T.text}}>{l}</span><span style={{fontWeight:700,color:T.accent}}>{r}</span>
+            </div>
+          ))}
+        </div>
+        <button onClick={()=>{setShowLimit(false);setScreen("subscribe");}} style={{width:"100%",padding:"13px 0",borderRadius:14,border:"none",background:T.accent,color:"#fff",fontWeight:600,fontSize:14,cursor:"pointer",marginBottom:10,letterSpacing:0.3}}>Upgrade Plan</button>
+        <button onClick={()=>setShowLimit(false)} style={{width:"100%",padding:"10px 0",borderRadius:12,border:`1.5px solid ${T.accent}`,background:"transparent",color:T.accent,fontWeight:600,fontSize:13,cursor:"pointer"}}>Wait for Reset</button>
+      </div>
+    </div>)}
+    <div style={{background:T.accent,color:"#fff",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div>
+        <div style={{fontWeight:900,fontSize:15,letterSpacing:1}}>PaKid Pro Int.</div>
+        <div style={{fontSize:11,opacity:0.6,marginTop:1,letterSpacing:0.3}}>Good to see you, {username||"Friend"} {holiday||""}</div>
+        {trialDaysLeft!==null&&(<div style={{fontSize:10,background:"rgba(255,255,255,0.2)",borderRadius:8,padding:"2px 8px",marginTop:3,display:"inline-block"}}>{trialDaysLeft===0?"Trial ends today — upgrade now":trialDaysLeft===1?"1 day left in free trial":trialDaysLeft+" days left in free trial"}</div>)}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div onClick={()=>atLim()&&setShowLimit(true)} style={{background:"rgba(0,0,0,0.2)",borderRadius:20,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}><span style={{opacity:0.7,fontSize:9}}>AI</span><span>{Math.max(0,lim()-udisplay)}/{lim()}</span></div>
+        <select value={theme} onChange={e=>setTheme(e.target.value)} style={{padding:"6px 10px",borderRadius:20,border:"none",background:"rgba(0,0,0,0.2)",color:"#fff",fontSize:11,cursor:"pointer"}}>
+          {Object.entries(THEME_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
+        </select>
+      </div>
+    </div>
+    <div style={{display:"flex",background:T.nav,borderBottom:`2px solid ${T.accent}`}}>
+      {TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"8px 2px",border:"none",background:tab===t.id?T.accent:"transparent",color:tab===t.id?"#fff":T.text,fontWeight:700,fontSize:10,cursor:"pointer",borderBottom:tab===t.id?`3px solid ${T.sub}`:"3px solid transparent"}}><div style={{fontSize:15}}>{t.icon}</div><div>{t.label}</div></button>)}
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:"20px 16px 40px"}}>
+      {tab==="finance"&&(<div>
+        <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:800,fontSize:22,color:T.text,letterSpacing:-0.5}}>Finance Careers</div><div style={{width:32,height:3,background:T.accent,borderRadius:4,marginTop:6}}></div>
+          <div style={{fontSize:11,color:T.sub,marginTop:3,fontStyle:"italic"}}>Educational only — not financial advice.</div>
+        </div>
+        <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+          {["all","finance","accounting"].map(f=><button key={f} onClick={()=>setFilter(f)} style={{padding:"7px 14px",borderRadius:20,border:`1.5px solid ${T.accent}`,background:filter===f?T.accent:T.card,color:filter===f?"#fff":T.text,fontSize:12,fontWeight:700,cursor:"pointer"}}>{f==="all"?"All Careers":f==="finance"?"Finance":"Accounting"}</button>)}
+        </div>
+        {careers.map((c,i)=>{const k=`c${i}`;return(<div key={i} style={{background:T.card,borderRadius:12,marginBottom:10,overflow:"hidden",border:`1.5px solid ${expanded===k?T.accent:"transparent"}`}}>
+          <div onClick={()=>setExpanded(expanded===k?null:k)} style={{padding:"16px 20px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:700,color:T.text,fontSize:14,letterSpacing:0.1}}>{c.title}</div>
+            <span style={{fontSize:16,color:T.sub}}>{expanded===k?"▲":"▼"}</span>
+          </div>
+          {expanded===k&&(<div style={{padding:"0 14px 14px",borderTop:`1px solid ${T.bg}`}}>
+            <div style={{marginBottom:10}}><div style={{fontWeight:600,color:"#15803d",marginBottom:8,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>Pros</div>{c.pros.map((p,j)=><div key={j} style={{fontSize:13,color:T.text,marginBottom:6,lineHeight:1.6,paddingLeft:4}}>· {p}</div>)}</div>
+            <div style={{marginBottom:10}}><div style={{fontWeight:600,color:"#dc2626",marginBottom:8,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>Cons</div>{c.cons.map((p,j)=><div key={j} style={{fontSize:13,color:T.text,marginBottom:6,lineHeight:1.6,paddingLeft:4}}>· {p}</div>)}</div>
+            <div style={{background:T.chip,borderRadius:12,padding:14,marginBottom:10}}><div style={{fontWeight:600,color:T.sub,marginBottom:6,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>Who Thrives Here</div><div style={{fontSize:13,color:T.text,lineHeight:1.65}}>{c.traits}</div></div>
+            <div style={{background:T.chip,borderRadius:12,padding:14}}><div style={{fontWeight:600,color:T.sub,marginBottom:6,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>Career Path</div><div style={{fontSize:13,color:T.text,lineHeight:1.65}}>{c.path}</div></div>
+          </div>)}
+        </div>);})}
+        <div style={{background:T.card,borderRadius:16,padding:20,marginTop:8,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:700,color:T.accent,marginBottom:8}}>💬 Ask PaKid anything about Finance</div>
+          <div style={{maxHeight:200,overflowY:"auto",marginBottom:8}}>
+            {chatMsgs.slice(-8).map((m,i)=><div key={i} style={{marginBottom:6,textAlign:m.role==="user"?"right":"left"}}><span style={{display:"inline-block",background:m.role==="user"?T.accent:T.chip,color:m.role==="user"?"#fff":T.text,padding:"10px 14px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",fontSize:13,maxWidth:"80%",lineHeight:1.5,border:m.role==="user"?"none":"1px solid "+T.border}}>{m.content}</span></div>)}
+            {chatLoad&&<div style={{color:T.sub,fontSize:13}}>Thinking... 🤔</div>}
+            <div ref={chatEnd}/>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <input value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Ask about any finance topic..." style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
+            <button onClick={()=>sendChat()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>Send</button>
+          </div>
+        </div>
+      </div>)}
+      {tab==="accounting"&&(<div>
+        <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:800,fontSize:22,color:T.text,letterSpacing:-0.5}}>Accounting</div><div style={{width:32,height:3,background:T.accent,borderRadius:4,marginTop:6}}></div>
+          <div style={{fontSize:11,color:T.sub,marginTop:3,fontStyle:"italic"}}>Educational only — consult a licensed CPA for professional advice.</div>
+        </div>
+        {AC.map((c,i)=>{const k=`ac${i}`;return(<div key={i} style={{background:T.card,borderRadius:12,marginBottom:10,overflow:"hidden",border:`1.5px solid ${expanded===k?T.accent:"transparent"}`}}>
+          <div onClick={()=>setExpanded(expanded===k?null:k)} style={{padding:"16px 20px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:700,color:T.text,fontSize:14,letterSpacing:0.1}}>{c.title}</div>
+            <span style={{fontSize:16,color:T.sub}}>{expanded===k?"▲":"▼"}</span>
+          </div>
+          {expanded===k&&(<div style={{padding:"0 14px 14px",borderTop:`1px solid ${T.bg}`}}>
+            <div style={{marginBottom:10}}><div style={{fontWeight:600,color:"#15803d",marginBottom:8,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>Pros</div>{c.pros.map((p,j)=><div key={j} style={{fontSize:13,color:T.text,marginBottom:6,lineHeight:1.6,paddingLeft:4}}>· {p}</div>)}</div>
+            <div style={{marginBottom:10}}><div style={{fontWeight:600,color:"#dc2626",marginBottom:8,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>Cons</div>{c.cons.map((p,j)=><div key={j} style={{fontSize:13,color:T.text,marginBottom:6,lineHeight:1.6,paddingLeft:4}}>· {p}</div>)}</div>
+            <div style={{background:T.chip,borderRadius:12,padding:14,marginBottom:10}}><div style={{fontWeight:600,color:T.sub,marginBottom:6,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>Who Thrives Here</div><div style={{fontSize:13,color:T.text,lineHeight:1.65}}>{c.traits}</div></div>
+            <div style={{background:T.chip,borderRadius:12,padding:14}}><div style={{fontWeight:600,color:T.sub,marginBottom:6,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>Career Path</div><div style={{fontSize:13,color:T.text,lineHeight:1.65}}>{c.path}</div></div>
+          </div>)}
+        </div>);})}
+        {[{title:"📋 Balance Sheet",sub:"Assets = Liabilities + Equity — always. Snapshot of what a company owns and owes at one point in time.",rows:[["ASSETS","","bold"],["Cash","$45,000",""],["Accounts Receivable","$12,500",""],["Inventory","$8,200",""],["Total Assets","$65,700","bold"],["LIABILITIES","","bold"],["Accounts Payable","$9,100",""],["Notes Payable","$15,000",""],["EQUITY","","bold"],["Owner Equity","$41,600",""],["Total L + E","$65,700","bold"]]},
+          {title:"📈 Income Statement",sub:"Revenue minus Expenses = Net Income. Shows what a company earned and spent over a period of time.",rows:[["REVENUE","","bold"],["Product Sales","$120,000",""],["Service Revenue","$30,000",""],["Total Revenue","$150,000","bold"],["COST OF GOODS SOLD","","bold"],["Materials","$(45,000)",""],["Labor","$(20,000)",""],["Gross Profit","$85,000","bold"],["OPERATING EXPENSES","","bold"],["Salaries","$(30,000)",""],["Rent","$(8,000)",""],["Marketing","$(5,000)",""],["Total Op Exp","$(43,000)","bold"],["Operating Income","$42,000","bold"],["Tax (21%)","$(8,820)",""],["NET INCOME","$33,180","bold"]]},
+          {title:"💵 Cash Flow Statement",sub:"Tracks actual cash in and out. A company can be profitable on paper but run out of real cash — this reveals the truth.",rows:[["OPERATING ACTIVITIES","","bold"],["Net Income","$33,180",""],["Add Depreciation","$3,000",""],["Change in A/R","$(4,500)",""],["Net Cash — Operations","$31,680","bold"],["INVESTING ACTIVITIES","","bold"],["Equipment Purchase","$(15,000)",""],["Net Cash — Investing","$(15,000)","bold"],["FINANCING ACTIVITIES","","bold"],["Loan Repayment","$(5,000)",""],["Owner Contribution","$10,000",""],["Net Cash — Financing","$5,000","bold"],["NET CHANGE IN CASH","$21,680","bold"],["Beginning Cash","$23,320",""],["ENDING CASH","$45,000","bold"]]},
+        ].map((stmt,si)=>(<div key={si} style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:700,color:T.accent,marginBottom:4}}>{stmt.title}</div>
+          <div style={{fontSize:11,color:T.sub,marginBottom:8}}>{stmt.sub}</div>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,color:T.text}}>
+            <thead><tr style={{background:T.accent,color:"#fff"}}><th style={{padding:"10px 14px",textAlign:"left",fontSize:11,letterSpacing:0.5,fontWeight:600}}>Account</th><th style={{padding:"10px 14px",textAlign:"right",fontSize:11,letterSpacing:0.5,fontWeight:600}}>Amount</th></tr></thead>
+            <tbody>{stmt.rows.map((row,i)=><tr key={i} style={{background:i%2===0?T.bg:T.card}}><td style={{padding:"5px 10px",fontWeight:row[2]||"normal"}}>{row[0]}</td><td style={{padding:"5px 10px",textAlign:"right",fontWeight:row[2]||"normal",color:row[1].startsWith("$(")?"#dc2626":row[2]==="bold"&&row[1].startsWith("$")?"#16a34a":T.text}}>{row[1]}</td></tr>)}</tbody>
+          </table>
+        </div>))}
+        <div style={{background:T.bg,borderRadius:10,padding:10,marginBottom:12,borderLeft:`3px solid ${T.accent}`}}>
+          <div style={{fontSize:12,color:T.text}}>💡 <strong>Key connection:</strong> Ending Cash ($45,000) on the Cash Flow Statement always ties back to Cash on the Balance Sheet. All three statements are permanently linked.</div>
+        </div>
+        <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:700,color:T.accent,marginBottom:8}}>💬 Ask any accounting question</div>
+          <div style={{display:"flex",gap:8}}>
+            <input value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="e.g. What is debit vs credit?" style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
+            <button onClick={()=>sendChat()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>Ask</button>
+          </div>
+        </div>
+      </div>)}
+      {tab==="excel"&&(<div>
+        <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:800,fontSize:22,color:T.text,letterSpacing:-0.5}}>Excel Mastery</div><div style={{width:32,height:3,background:T.accent,borderRadius:4,marginTop:6}}></div>
+          <div style={{fontSize:13,color:T.text,marginTop:4,lineHeight:1.6}}>Pick any topic. You will get a plain English explanation, a practice scenario with a chart to fill in, and AI feedback to check your answers.</div>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:14}}>
+          {EXCEL_TOPICS.map(function(t,i){return(<button key={i} onClick={function(){loadExcel(t);}} style={{padding:"6px 14px",borderRadius:24,border:"1px solid "+(selExcel&&selExcel.id===t.id?T.accent:T.border),background:selExcel&&selExcel.id===t.id?T.accent:"transparent",color:selExcel&&selExcel.id===t.id?"#fff":T.sub,fontSize:11,fontWeight:500,cursor:"pointer"}}>{t.label}</button>);})}
+        </div>
+        {selExcel&&scenario&&(<div>
+          <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:800,fontSize:15,color:T.text,letterSpacing:-0.3,marginBottom:6}}>{selExcel.label}</div>
+            <div style={{fontSize:13,color:T.sub,lineHeight:1.7,marginBottom:14}}>{scenario.what}</div>
+            {aiScenariosLoading&&(<div style={{fontSize:11,color:T.sub,marginBottom:10,padding:"6px 12px",background:T.chip,borderRadius:20,display:"inline-block"}}>🔄 Generating fresh scenario...</div>)}
+            {!aiScenariosLoading&&aiScenarios[selExcel.id]&&(<div style={{background:T.chip,borderRadius:12,padding:14,marginBottom:14,border:"1px solid "+T.border}}>
+              <div style={{fontSize:10,color:T.sub,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Today's Scenario</div>
+              <div style={{fontWeight:600,fontSize:14,color:T.text,marginBottom:4}}>{aiScenarios[selExcel.id].title}</div>
+              <div style={{fontSize:13,color:T.sub,lineHeight:1.6,marginBottom:4}}>{aiScenarios[selExcel.id].story}</div>
+              <div style={{fontSize:12,color:T.accent,lineHeight:1.5}}>{aiScenarios[selExcel.id].context}</div>
+            </div>)}
+            <button onClick={function(){setShowLearn(function(s){return !s;});}} style={{padding:"9px 20px",borderRadius:24,border:"1px solid "+(showLearn?T.accent:T.border),background:showLearn?T.accent:"transparent",color:showLearn?"#fff":T.sub,fontWeight:600,fontSize:13,cursor:"pointer",letterSpacing:0.2}}>
+              {showLearn?"✕ Close Guide":"📖 How to Do This in Excel"}
+            </button>
+          </div>
+          {showLearn&&scenario.learn&&(<div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:700,fontSize:14,color:T.text,marginBottom:14,letterSpacing:-0.2}}>Step-by-Step Guide</div>
+            {scenario.learn.map(function(item,i){return(
+              <div key={i} style={{display:"flex",gap:14,marginBottom:i<scenario.learn.length-1?18:0,paddingBottom:i<scenario.learn.length-1?18:0,borderBottom:i<scenario.learn.length-1?"1px solid "+T.border:"none"}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:T.accent,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,flexShrink:0}}>{item.step}</div>
+                <div>
+                  <div style={{fontWeight:600,fontSize:13,color:T.text,marginBottom:4}}>{item.title}</div>
+                  <div style={{fontSize:13,color:T.sub,lineHeight:1.7}}>{item.body}</div>
+                </div>
+              </div>
+            );})}
+          </div>)}
+          <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:700,color:T.text,marginBottom:4,fontSize:14}}>📊 {aiScenarios[selExcel.id]&&aiScenarios[selExcel.id].title?aiScenarios[selExcel.id].title:scenario.title}</div>
+            <div style={{fontSize:13,color:T.text,lineHeight:1.6,marginBottom:12}}>{aiScenarios[selExcel.id]&&aiScenarios[selExcel.id].story?aiScenarios[selExcel.id].story:scenario.story}</div>
+            <div style={{background:"#fffbeb",borderRadius:8,padding:"7px 11px",marginBottom:10,fontSize:11,color:"#92400e",fontWeight:600}}>Yellow = fill these in yourself. Green = the answer Excel would calculate.</div>
+            <div style={{overflowX:"auto",marginBottom:10}}>
+              <table style={{borderCollapse:"collapse",fontSize:12,minWidth:"100%"}}>
+                <thead><tr>{scenario.headers.map(function(h,i){
+                  if(i===scenario.headers.length-1&&!showAnswers)return null;
+                  return(<th key={i} style={{padding:"8px 12px",background:T.accent,color:"#fff",border:"1px solid "+T.bg,whiteSpace:"nowrap",fontSize:11,fontWeight:700}}>{h}</th>);
+                })}</tr></thead>
+                <tbody>{(aiScenarios[selExcel.id]&&aiScenarios[selExcel.id].rows?aiScenarios[selExcel.id].rows:scenario.rows).map(function(row,ri){
+                  return(<tr key={ri}>
+                    <td style={{border:"1px solid "+T.bg,padding:0,background:T.bg}}>
+                      <div style={{padding:"6px 10px",fontSize:12,color:T.text,fontWeight:600}}>{row.label}</div>
+                    </td>
+                    {row.vals.map(function(val,vi){
+                      var k=ri+"-"+vi;
+                      return(<td key={vi} style={{border:"1px solid "+T.bg,padding:0,background:"#fffbeb"}}>
+                        <input value={cells[k]!==undefined?cells[k]:String(val)} onChange={function(e){var n=Object.assign({},cells);n[k]=e.target.value;setCells(n);}} style={{width:"100%",minWidth:80,padding:"6px 10px",border:"none",background:"transparent",color:T.text,fontSize:12,boxSizing:"border-box",outline:"none"}}/>
+                      </td>);
+                    })}
+                    {showAnswers&&(<td style={{border:"1px solid "+T.bg,padding:0,background:"#f0fdf4"}}>
+                      <div style={{padding:"6px 10px",color:"#16a34a",fontSize:11,fontFamily:"monospace"}}>{scenario.rows[ri]?scenario.rows[ri].formula:""}</div>
+                    </td>)}
+                  </tr>);
+                })}</tbody>
+              </table>
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:14}}>
+              <button onClick={function(){setShowAnswers(function(s){return !s;});}} style={{flex:1,padding:"11px 0",borderRadius:14,border:"1px solid "+(showAnswers?T.accent:T.border),background:showAnswers?T.accent:"transparent",color:showAnswers?"#fff":T.sub,fontWeight:600,fontSize:13,cursor:"pointer",letterSpacing:0.2}}>
+                {showAnswers?"🙈 Hide Answers":"👁 Show Answers"}
+              </button>
+            </div>
+            <button onClick={function(){checkExcel();}} style={{width:"100%",padding:"14px 0",borderRadius:14,border:"none",background:T.accent,color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",letterSpacing:0.3}}>{exFbLoad?"Checking your work...":"Check My Work"}</button>
+            {exFb&&(<div style={{marginTop:12,padding:14,background:T.bg,borderRadius:12,fontSize:13,color:T.text,lineHeight:1.7,borderLeft:"4px solid "+T.accent,whiteSpace:"pre-wrap"}}>
+              <div style={{fontWeight:700,color:T.accent,marginBottom:6,fontSize:13}}>📊 Feedback</div>
+              {exFb}
+            </div>)}
+          </div>
+        </div>)}
+      </div>)}
+      {tab==="invest"&&(<div>
+        <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:800,fontSize:22,color:T.text,letterSpacing:-0.5}}>Market Simulation</div><div style={{width:32,height:3,background:T.accent,borderRadius:4,marginTop:6}}></div>
+          <div style={{fontSize:13,color:T.text,marginTop:4}}>1 real second = 1 trading minute. Buy and sell as many times as you want. Pause anytime to study the chart. Get detailed AI feedback on every trade.</div>
+          <div style={{fontSize:11,color:T.sub,marginTop:4,fontStyle:"italic"}}>⚠️ Simulated only. No real money. Not financial advice.</div>
+        </div>
+        {!simStock?(<div style={{background:T.card,borderRadius:14,padding:18}}>
+          <div style={{fontWeight:700,color:T.text,marginBottom:12}}>Configure Your Simulation</div>
+          <div style={{fontSize:12,color:T.sub,marginBottom:8,fontWeight:600}}>NUMBER OF SHARES</div>
+          <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:16}}>
+            <button onClick={()=>setSimShares(Math.max(1,simShares-1))} style={{width:38,height:38,borderRadius:8,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:18,cursor:"pointer",fontWeight:700}}>−</button>
+            <input type="number" value={simShares} onChange={e=>setSimShares(Math.max(1,parseInt(e.target.value)||1))} style={{width:80,padding:"8px",borderRadius:8,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:16,textAlign:"center"}}/>
+            <button onClick={()=>setSimShares(simShares+1)} style={{width:38,height:38,borderRadius:8,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:18,cursor:"pointer",fontWeight:700}}>+</button>
+            <span style={{fontSize:13,color:T.sub}}>shares</span>
+          </div>
+          <div style={{fontSize:12,color:T.sub,marginBottom:14,lineHeight:1.6}}>⏱ Full trading day 9:30 AM to 4:00 PM plays out in about 6.5 real minutes. Buy and sell multiple times.</div>
+          <button onClick={()=>startSim()} style={{width:"100%",padding:"15px 0",borderRadius:14,border:"none",background:T.accent,color:"#fff",fontWeight:700,fontSize:15,cursor:"pointer",letterSpacing:0.3}}>Start Simulation</button>
+        </div>):(<div>
+          <div style={{display:"flex",gap:8,marginBottom:10}}>
+            <button onClick={()=>setSimReveal(false)} style={{flex:1,padding:"9px 0",borderRadius:10,border:`2px solid ${T.accent}`,background:!simReveal?T.accent:"transparent",color:!simReveal?"#fff":T.accent,fontWeight:700,fontSize:12,cursor:"pointer"}}>🙈 Real Time (Blind)</button>
+            <button onClick={()=>setSimReveal(true)} style={{flex:1,padding:"9px 0",borderRadius:10,border:"2px solid #f59e0b",background:simReveal?"#f59e0b":"transparent",color:simReveal?"#fff":"#b45309",fontWeight:700,fontSize:12,cursor:"pointer"}}>👁 See Full Day</button>
+          </div>
+          {simReveal&&<div style={{background:"#fef3c7",borderRadius:10,padding:10,marginBottom:10,fontSize:12,color:"#92400e",borderLeft:"3px solid #f59e0b"}}>⚠️ Training mode — you can see the full day ahead. In real markets you never know what comes next!</div>}
+          {renderChart()}
+          <div style={{background:T.card,borderRadius:12,padding:10,marginBottom:10,display:"flex",gap:12,flexWrap:"wrap",justifyContent:"space-between"}}>
+            <div><div style={{fontSize:9,color:T.sub}}>STOCK</div><div style={{fontWeight:800,color:T.accent}}>{simStock.ticker}</div></div>
+            <div><div style={{fontSize:9,color:T.sub}}>SHARES</div><div style={{fontWeight:800,color:T.text}}>{simShares}</div></div>
+            {simBuy!==null&&<div><div style={{fontSize:9,color:T.sub}}>BOUGHT AT</div><div style={{fontWeight:700,color:"#16a34a",fontSize:12}}>${simPrices[simBuy].toFixed(2)} @ {toTime(simBuy)}</div></div>}
+            <div><div style={{fontSize:9,color:T.sub}}>TRADES</div><div style={{fontWeight:800,color:T.text}}>{simTrades.length}</div></div>
+            {simTrades.length>0&&<div><div style={{fontSize:9,color:T.sub}}>TOTAL P&L</div><div style={{fontWeight:800,fontSize:13,color:simTrades.reduce((s,t)=>s+t.pnl,0)>=0?"#16a34a":"#dc2626"}}>{simTrades.reduce((s,t)=>s+t.pnl,0)>=0?"+":""}${simTrades.reduce((s,t)=>s+t.pnl,0).toFixed(2)}</div></div>}
+          </div>
+          {!simOver&&(<div style={{marginBottom:10}}>
+            {!simRun&&simIdx===0?(<button onClick={()=>setSimRun(true)} style={{width:"100%",padding:"15px 0",borderRadius:14,border:"none",background:T.accent,color:"#fff",fontWeight:700,fontSize:15,cursor:"pointer"}}>▶ Start Trading Day</button>):(
+              <div>
+                <div style={{display:"flex",gap:8,marginBottom:8}}>
+                  <button onClick={()=>buyNow()} disabled={simBuy!==null||!simRun} style={{flex:1,padding:"12px 0",borderRadius:12,border:"none",background:simBuy!==null||!simRun?"#aaa":"#16a34a",color:"#fff",fontWeight:800,fontSize:14,cursor:simBuy!==null||!simRun?"not-allowed":"pointer"}}>{simBuy!==null?`✅ In @ $${simPrices[simBuy].toFixed(2)}`:"🟢 BUY"}</button>
+                  <button onClick={()=>sellNow()} disabled={simBuy===null||!simRun} style={{flex:1,padding:"12px 0",borderRadius:12,border:"none",background:simBuy===null||!simRun?"#aaa":"#dc2626",color:"#fff",fontWeight:800,fontSize:14,cursor:simBuy===null||!simRun?"not-allowed":"pointer"}}>🔴 SELL</button>
+                </div>
+                <button onClick={()=>setSimRun(r=>!r)} style={{width:"100%",padding:"10px 0",borderRadius:12,border:`1.5px solid ${T.accent}`,background:"transparent",color:T.accent,fontWeight:800,fontSize:13,cursor:"pointer"}}>{simRun?"⏸ Pause — Study the Chart":`▶ Resume (${toTime(simIdx)})`}</button>
+              </div>
+            )}
+          </div>)}
+          {simOver&&(<div style={{background:T.card,borderRadius:12,padding:14,marginBottom:10,textAlign:"center"}}>
+            <div style={{fontWeight:800,fontSize:16,color:T.accent,marginBottom:4}}>🔔 Market Closed — 4:00 PM</div>
+            <div style={{fontSize:13,color:T.text}}>{simTrades.length} trade{simTrades.length!==1?"s":""} completed today</div>
+            <div style={{fontSize:16,fontWeight:900,color:simTrades.reduce((s,t)=>s+t.pnl,0)>=0?"#16a34a":"#dc2626",marginTop:6}}>Final P&L: {simTrades.reduce((s,t)=>s+t.pnl,0)>=0?"+":""}${simTrades.reduce((s,t)=>s+t.pnl,0).toFixed(2)}</div>
+          </div>)}
+          {simTrades.length>0&&(<div style={{background:T.card,borderRadius:12,padding:12,marginBottom:10}}>
+            <div style={{fontWeight:700,color:T.accent,marginBottom:8,fontSize:13}}>📋 Trade History</div>
+            {simTrades.map((t,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<simTrades.length-1?`1px solid ${T.bg}`:"none",fontSize:12}}><span style={{color:T.sub}}>#{i+1} {toTime(t.buyIdx)}→{toTime(t.sellIdx)}</span><span style={{color:T.sub}}>${t.buyPrice.toFixed(2)}→${t.sellPrice.toFixed(2)}</span><span style={{fontWeight:700,color:t.pnl>=0?"#16a34a":"#dc2626"}}>{t.pnl>=0?"+":""}${t.pnl.toFixed(2)}</span></div>)}
+          </div>)}
+          {simFbLoad&&<div style={{color:T.sub,fontSize:13,marginBottom:10,padding:12,background:T.card,borderRadius:10}}>Analyzing your trade... 🤔</div>}
+          {simFb&&<div style={{background:T.card,borderRadius:12,padding:14,marginBottom:10,borderLeft:`4px solid ${T.accent}`}}><div style={{fontWeight:700,color:T.accent,marginBottom:6,fontSize:13}}>📊 Trade Feedback</div><div style={{fontSize:13,color:T.text,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{simFb}</div></div>}
+          <button onClick={()=>{setSimStock(null);setSimRun(false);setSimFb("");setSimOver(false);clearInterval(simT.current);}} style={{width:"100%",padding:"11px 0",borderRadius:12,border:`1.5px solid ${T.accent}`,background:"transparent",color:T.accent,fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:16}}>↩ New Simulation</button>
+          <div style={{fontWeight:800,fontSize:16,color:T.accent,marginBottom:12}}>📚 Trading Fundamentals</div>
+          {[{e:"📈",t:"Price Going UP",sects:[["For YOU:","If you own shares and the price rises your investment is worth more on paper. You only realize that gain when you actually sell. Holding through temporary dips is one of the most important skills in investing."],["For the COMPANY:","A rising stock price signals investors believe the company is growing. It makes it easier to raise capital, attracts talent, and boosts confidence from customers and lenders."],["Key insight:","Price going up does not always mean the company is doing better — hype and sentiment can inflate prices. Smart investors look at fundamentals not just the chart."]]},{e:"📉",t:"Price Going DOWN",sects:[["For YOU:","If you own shares and the price drops your investment is worth less on paper — but you only actually lose money if you SELL at the lower price. Panic-selling during dips is one of the most common and costly mistakes beginners make."],["For the COMPANY:","A falling price can hurt ability to raise money and damage employee and customer confidence. However a price drop does not always mean the company is failing."],["Opportunity angle:","Experienced investors treat drops on quality companies as sales at the store. Buffett said: Be fearful when others are greedy and greedy when others are fearful."]]}].map((card,i)=>(
+            <div key={i} style={{background:T.card,borderRadius:14,padding:14,marginBottom:12,borderLeft:`4px solid ${T.accent}`}}>
+              <div style={{fontWeight:800,fontSize:15,color:T.accent,marginBottom:10}}>{card.e} {card.t}</div>
+              {card.sects.map((s,j)=><div key={j} style={{marginBottom:8}}><div style={{fontWeight:700,fontSize:12,color:T.sub,marginBottom:2}}>{s[0]}</div><div style={{fontSize:13,color:T.text,lineHeight:1.6}}>{s[1]}</div></div>)}
+            </div>
+          ))}
+          <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:800,fontSize:15,color:T.accent,marginBottom:10}}>⏳ Long-Term vs Short-Term Trading</div>
+            <div style={{background:T.bg,borderRadius:10,padding:12,marginBottom:10}}><div style={{fontWeight:700,color:"#16a34a",marginBottom:6,fontSize:13}}>🌱 Long-Term Investing</div><div style={{fontSize:13,color:T.text,lineHeight:1.65}}>Buy and hold for months, years, or decades. Apple bought in 2010 for $10 per share is worth $170+ today — a 1,600% return simply by holding. The S&P 500 has returned about 10% per year on average over 100 years. This is how most everyday investors build real wealth.</div></div>
+            <div style={{background:T.bg,borderRadius:10,padding:12,marginBottom:10}}><div style={{fontWeight:700,color:"#dc2626",marginBottom:6,fontSize:13}}>⚡ Short-Term Day Trading</div><div style={{fontSize:13,color:T.text,lineHeight:1.65}}>Buy and sell within a single day to capture small price movements. Studies show over 80% of day traders lose money over time. Requires extreme discipline, fast decisions, and advanced tools. This simulation shows you how hard timing the market really is.</div></div>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,color:T.text}}>
+              <thead><tr style={{background:T.accent,color:"#fff"}}><th style={{padding:"5px 8px",textAlign:"left"}}>Factor</th><th style={{padding:"5px 8px",textAlign:"center"}}>Long-Term</th><th style={{padding:"5px 8px",textAlign:"center"}}>Short-Term</th></tr></thead>
+              <tbody>{[["Time held","Years","Minutes-Days"],["Stress level","Low","Very high"],["Tax rate","15-20%","Up to 37%"],["Success rate","High","~20% profitable"],["Best for","Most people","Experienced traders"]].map((row,i)=><tr key={i} style={{background:i%2===0?T.bg:T.card}}><td style={{padding:"5px 8px",fontWeight:600}}>{row[0]}</td><td style={{padding:"5px 8px",textAlign:"center",color:"#16a34a"}}>{row[1]}</td><td style={{padding:"5px 8px",textAlign:"center",color:"#dc2626"}}>{row[2]}</td></tr>)}</tbody>
+            </table>
+          </div>
+          <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:800,fontSize:15,color:T.accent,marginBottom:10}}>🏦 Borrowing Against Your Stocks</div>
+            <div style={{fontSize:13,color:T.text,lineHeight:1.65,marginBottom:10}}>Once you own stocks they become an asset — like a house. You can borrow against them using a margin loan or securities-backed loan without selling your shares and triggering taxes.</div>
+            <div style={{background:T.bg,borderRadius:10,padding:12,marginBottom:10}}><div style={{fontWeight:700,color:T.accent,marginBottom:4,fontSize:13}}>How it works:</div><div style={{fontSize:13,color:T.text,lineHeight:1.65}}>You own $100,000 of Apple stock and need $30,000 cash. Instead of selling and paying capital gains taxes, your broker lends you $30,000 using your shares as collateral. You keep your shares and pay interest on the loan.</div></div>
+            <div style={{background:"#fef3c7",borderRadius:10,padding:12,borderLeft:"4px solid #f59e0b"}}><div style={{fontWeight:700,color:"#b45309",marginBottom:4,fontSize:13}}>⚠️ The Margin Call Risk:</div><div style={{fontSize:13,color:"#713f12",lineHeight:1.65}}>If the stock drops far enough your broker issues a margin call — demanding more money immediately or selling your shares automatically, often at the worst time. This is how investors have lost everything in market crashes. Borrowing amplifies both gains and losses equally.</div></div>
+          </div>
+        </div>)}
+      </div>)}
+      {tab==="history"&&(<div>
+        <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:800,fontSize:22,color:T.text,letterSpacing:-0.5}}>Market History</div><div style={{width:32,height:3,background:T.accent,borderRadius:4,marginTop:6}}></div>
+          <div style={{fontSize:13,color:T.text,marginTop:4}}>Major events that shaped global finance and crypto — key figures, dollar amounts, and lessons.</div>
+        </div>
+        {MH.map((ev,i)=><div key={i} style={{background:T.card,borderRadius:12,padding:14,marginBottom:10,borderLeft:`4px solid ${T.accent}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontWeight:700,fontSize:14,color:T.text}}>{ev.event}</div>
+            <div style={{background:T.chip,color:T.accent,borderRadius:20,padding:"3px 12px",fontSize:11,fontWeight:600,border:"1px solid "+T.border}}>{ev.year}</div>
+          </div>
+          <div style={{color:T.text,fontSize:13,lineHeight:1.6}}>{ev.detail}</div>
+        </div>)}
+        <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:700,color:T.text,marginBottom:10,fontSize:15}}>Search Any Event</div>
+          <div style={{display:"flex",gap:8,marginBottom:histOut?10:0}}>
+            <input value={histIn} onChange={e=>setHistIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&searchHist()} placeholder="e.g. Enron, Bitcoin halving, 2008 crisis..." style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
+            <button onClick={()=>searchHist()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>{histLoad?"...":"Go"}</button>
+          </div>
+          {histOut&&<div><div style={{fontWeight:700,color:T.accent,marginBottom:5,fontSize:13}}>📖 {histQ}</div><div style={{fontSize:13,color:T.text,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{histOut}</div></div>}
+        </div>
+      </div>)}
+      {tab==="cpa"&&(<div>
+        <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+          <div style={{fontWeight:800,fontSize:22,color:T.text,letterSpacing:-0.5}}>CPA Exam Prep</div><div style={{width:32,height:3,background:T.accent,borderRadius:4,marginTop:6}}></div>
+          <div style={{fontSize:13,color:T.text,marginTop:4}}>Everything you need to understand, study for, and pass all 4 sections of the CPA exam.</div>
+          <div style={{fontSize:11,color:T.sub,marginTop:3,fontStyle:"italic"}}>Educational only — verify requirements with your state board and NASBA.</div>
+        </div>
+        <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+          {[["overview","📌 Overview"],["far","📒 FAR"],["aud","🔍 AUD"],["reg","📋 REG"],["bec","💼 ISC/BAR"],["howto","🗺️ How to Become a CPA"]].map(([s,label])=>(
+            <button key={s} onClick={()=>{setCpaSec(s);setCpaCardIdx(0);setCpaFlipped(false);setCpaPQ("");setCpaPA("");setCpaAskOut("");}} style={{padding:"8px 12px",borderRadius:20,border:`1.5px solid ${T.accent}`,background:cpaSec===s?T.accent:T.card,color:cpaSec===s?"#fff":T.text,fontSize:11,fontWeight:700,cursor:"pointer"}}>{label}</button>
+          ))}
+        </div>
+        {cpaSec==="overview"&&(<div>
+          <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:700,color:T.accent,fontSize:15,marginBottom:8}}>What is the CPA Exam?</div>
+            <div style={{fontSize:13,color:T.text,lineHeight:1.7}}>The Uniform CPA Examination is required to become a licensed CPA. As of 2024 it has 3 core sections (FAR, AUD, REG) plus 1 discipline section of your choice. All 4 must be passed within an 18-month rolling window.</div>
+          </div>
+          {Object.values(CPA).map((s,i)=><div key={i} style={{background:T.card,borderRadius:12,padding:14,marginBottom:10,borderLeft:`4px solid ${s.color}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <div style={{fontWeight:800,fontSize:16,color:s.color}}>{s.emoji} {s.name}</div>
+              <button onClick={()=>setCpaSec(Object.keys(CPA)[i])} style={{padding:"5px 12px",borderRadius:20,border:`1.5px solid ${s.color}`,background:"transparent",color:s.color,fontSize:11,fontWeight:700,cursor:"pointer"}}>Study →</button>
+            </div>
+            <div style={{fontWeight:600,fontSize:12,color:T.text,marginBottom:4}}>{s.full}</div>
+            <div style={{fontSize:12,color:T.text,lineHeight:1.6,marginBottom:8}}>{s.desc}</div>
+            <div style={{display:"flex",gap:12}}><span style={{fontSize:11,color:T.sub}}>⏱ {s.hours}</span><span style={{fontSize:11,color:T.sub}}>📊 Avg Pass: {s.pass}</span></div>
+          </div>)}
+          <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:700,color:T.accent,marginBottom:4,fontSize:15}}>🎲 Today's Sample Questions</div>
+            <div style={{fontSize:12,color:T.sub,marginBottom:8}}>One fresh AI-generated question per section — regenerates every time you open the app.</div>
+            <div style={{background:T.bg,borderRadius:10,padding:10,marginBottom:12,borderLeft:`3px solid ${T.accent}`}}>
+              <div style={{fontSize:11,color:T.text,lineHeight:1.6}}>🔄 <strong>These questions regenerate automatically every session</strong> — brand new practice material across all 4 CPA sections every time you open PaKid Pro Int.</div>
+            </div>
+            {cpaAutoLoad&&<div style={{fontSize:12,color:T.sub,padding:10}}>Generating fresh questions for all 4 sections...</div>}
+            {Object.keys(CPA).map(sid=>{
+              const s=CPA[sid];
+              const text=cpaAutoQs[sid];
+              const ai2=text?text.indexOf("ANSWER:"):-1;
+              const qPart=ai2>-1?text.slice(0,ai2).trim():text;
+              const aPart=ai2>-1?text.slice(ai2).trim():"";
+              const shown=cpaAutoShow[sid];
+              return(<div key={sid} style={{marginBottom:12,borderRadius:12,overflow:"hidden",border:`1.5px solid ${s.color}33`}}>
+                <div style={{background:s.color,padding:"8px 12px"}}><span style={{fontWeight:700,color:"#fff",fontSize:13}}>{s.emoji} {s.name} — {s.full}</span></div>
+                <div style={{padding:12,background:T.bg}}>
+                  {!text?<div style={{fontSize:12,color:T.sub}}>Loading...</div>:<div style={{fontSize:12,color:T.text,lineHeight:1.7,whiteSpace:"pre-wrap",marginBottom:8}}>{qPart}</div>}
+                  {aPart&&(shown?(<div style={{background:`${s.color}18`,borderRadius:8,padding:10,borderLeft:`3px solid ${s.color}`}}><div style={{fontSize:11,fontWeight:700,color:s.color,marginBottom:4}}>ANSWER AND EXPLANATION</div><div style={{fontSize:12,color:T.text,lineHeight:1.6,whiteSpace:"pre-wrap"}}>{aPart}</div></div>):(<button onClick={()=>setCpaAutoShow(p=>({...p,[sid]:true}))} style={{padding:"6px 14px",borderRadius:8,border:`1.5px solid ${s.color}`,background:"transparent",color:s.color,fontSize:11,fontWeight:700,cursor:"pointer"}}>Reveal Answer</button>))}
+                </div>
+              </div>);
+            })}
+          </div>
+          <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:700,color:T.accent,marginBottom:10}}>📊 CPA Exam Fast Facts</div>
+            {[["Total Sections","4 (3 core + 1 discipline)"],["Passing Score","75 out of 99 per section"],["Time per Section","4 hours"],["Question Types","Multiple Choice + Task-Based Simulations"],["18-Month Window","All 4 sections must pass within 18 months"],["Exam Fee","~$250 per section ($1,000 total)"],["Testing Centers","Prometric locations nationwide, year-round"],["Average Pass Rate","~50% per section on first attempt"]].map(([k,v],i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:i<7?`1px solid ${T.bg}`:"none",fontSize:12}}>
+                <span style={{color:T.sub,fontWeight:600}}>{k}</span><span style={{color:T.text,fontWeight:700,textAlign:"right",maxWidth:"55%"}}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>)}
+        {["far","aud","reg","bec"].includes(cpaSec)&&(()=>{
+          const s=CPA[cpaSec];
+          const crd=s.cards[cpaCardIdx];
+          return(<div>
+            <div style={{background:T.card,borderRadius:14,padding:14,marginBottom:12,borderLeft:`4px solid ${s.color}`}}>
+              <div style={{fontWeight:800,fontSize:18,color:s.color}}>{s.emoji} {s.name} — {s.full}</div>
+              <div style={{fontSize:13,color:T.text,marginTop:6,lineHeight:1.6}}>{s.desc}</div>
+              <div style={{display:"flex",gap:10,marginTop:8,flexWrap:"wrap"}}>
+                <span style={{background:`${s.color}22`,color:s.color,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20}}>{s.hours}</span>
+                <span style={{background:`${s.color}22`,color:s.color,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20}}>Avg Pass: {s.pass}</span>
+              </div>
+            </div>
+            <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+              <div style={{fontWeight:700,color:T.accent,marginBottom:10}}>📚 Topics Covered</div>
+              {s.topics.map((t,i)=><div key={i} style={{marginBottom:10,paddingBottom:10,borderBottom:i<s.topics.length-1?`1px solid ${T.bg}`:""}}>
+                <div style={{fontWeight:700,color:s.color,fontSize:13,marginBottom:3}}>{t.n}</div>
+                <div style={{fontSize:12,color:T.text,lineHeight:1.6}}>{t.d}</div>
+              </div>)}
+            </div>
+            <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+              <div style={{fontWeight:700,color:T.accent,marginBottom:10}}>🃏 Flashcards ({cpaCardIdx+1}/{s.cards.length})</div>
+              <div onClick={()=>setCpaFlipped(f=>!f)} style={{background:cpaFlipped?s.color:T.bg,borderRadius:12,padding:20,minHeight:100,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:10,color:cpaFlipped?"rgba(255,255,255,0.7)":T.sub,marginBottom:6,fontWeight:600}}>{cpaFlipped?"ANSWER — tap to flip back":"QUESTION — tap to reveal answer"}</div>
+                  <div style={{fontSize:14,color:cpaFlipped?"#fff":T.text,fontWeight:cpaFlipped?"400":"700",lineHeight:1.6}}>{cpaFlipped?crd.a:crd.q}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>{setCpaCardIdx(i=>Math.max(0,i-1));setCpaFlipped(false);}} disabled={cpaCardIdx===0} style={{flex:1,padding:"10px 0",borderRadius:10,border:`1.5px solid ${T.accent}`,background:"transparent",color:T.accent,fontWeight:700,cursor:cpaCardIdx===0?"not-allowed":"pointer",opacity:cpaCardIdx===0?0.4:1}}>← Prev</button>
+                <button onClick={()=>{setCpaCardIdx(i=>Math.min(s.cards.length-1,i+1));setCpaFlipped(false);}} disabled={cpaCardIdx===s.cards.length-1} style={{flex:1,padding:"10px 0",borderRadius:10,border:`1.5px solid ${T.accent}`,background:"transparent",color:T.accent,fontWeight:700,cursor:cpaCardIdx===s.cards.length-1?"not-allowed":"pointer",opacity:cpaCardIdx===s.cards.length-1?0.4:1}}>Next →</button>
+              </div>
+            </div>
+            <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+              <div style={{fontWeight:700,color:T.accent,marginBottom:10}}>📖 Key Terms</div>
+              {s.terms.map((t,i)=><div key={i} style={{marginBottom:10,paddingBottom:10,borderBottom:i<s.terms.length-1?`1px solid ${T.bg}`:""}}>
+                <div style={{fontWeight:700,color:s.color,fontSize:13}}>{t.t}</div>
+                <div style={{fontSize:12,color:T.text,lineHeight:1.6,marginTop:2}}>{t.d}</div>
+              </div>)}
+            </div>
+            <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+              <div style={{fontWeight:700,color:T.accent,marginBottom:10}}>✅ Tips to Pass {s.name}</div>
+              {s.tips.map((tip,i)=><div key={i} style={{display:"flex",gap:8,marginBottom:8,alignItems:"flex-start"}}><span style={{color:s.color,fontWeight:800,fontSize:14}}>→</span><span style={{fontSize:13,color:T.text,lineHeight:1.6}}>{tip}</span></div>)}
+            </div>
+            <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+              <div style={{fontWeight:700,color:T.accent,marginBottom:8}}>🤖 AI Practice Question</div>
+              <button onClick={()=>genCPAQ(cpaSec)} style={{width:"100%",padding:"12px 0",borderRadius:10,border:"none",background:s.color,color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:12}}>{cpaPLoad?"Generating...":"🎲 Generate Practice Question"}</button>
+              {cpaPQ&&(<div>
+                <div style={{background:T.bg,borderRadius:10,padding:12,marginBottom:8}}><div style={{fontSize:13,color:T.text,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{cpaPQ}</div></div>
+                {cpaPA&&<div style={{background:`${s.color}18`,borderRadius:10,padding:12,borderLeft:`4px solid ${s.color}`}}><div style={{fontWeight:700,color:s.color,marginBottom:4,fontSize:12}}>ANSWER AND EXPLANATION</div><div style={{fontSize:13,color:T.text,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{cpaPA}</div></div>}
+              </div>)}
+            </div>
+            <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
+              <div style={{fontWeight:700,color:T.accent,marginBottom:8}}>💬 Ask anything about {s.name}</div>
+              <div style={{display:"flex",gap:8,marginBottom:cpaAskOut?10:0}}>
+                <input value={cpaAskIn} onChange={e=>setCpaAskIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&askCPA()} placeholder={`e.g. Explain ${s.topics[0].n} simply...`} style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
+                <button onClick={()=>askCPA()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>{cpaAskLoad?"...":"Ask"}</button>
+              </div>
+              {cpaAskOut&&<div style={{fontSize:13,color:T.text,lineHeight:1.7,padding:12,background:T.bg,borderRadius:10,whiteSpace:"pre-wrap"}}>{cpaAskOut}</div>}
+            </div>
+          </div>);
+        })()}
+        {cpaSec==="howto"&&(<div>
+          <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:800,fontSize:18,color:T.text,letterSpacing:-0.3,marginBottom:6}}>Path to CPA Licensure</div>
+            <div style={{fontSize:13,color:T.text,lineHeight:1.6}}>Becoming a CPA is a multi-year journey requiring education, exams, experience, and ethics. Here is every step in order.</div>
+          </div>
+          {CPA_HOW.map((step,i)=><div key={i} style={{background:T.card,borderRadius:12,padding:14,marginBottom:10,display:"flex",gap:12}}>
+            <div style={{background:T.accent,color:"#fff",borderRadius:"50%",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:14,flexShrink:0}}>{step.step}</div>
+            <div><div style={{fontWeight:700,color:T.accent,fontSize:14,marginBottom:4}}>{step.title}</div><div style={{fontSize:13,color:T.text,lineHeight:1.65}}>{step.detail}</div></div>
+          </div>)}
+          <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:700,color:T.accent,marginBottom:10}}>📅 Realistic Timeline</div>
+            {[["Year 1-4","Complete bachelor in Accounting (120 credits)"],["Year 4-5","Complete 150 credit requirement — 5th year or master degree"],["Year 4-6","Study and pass all 4 CPA exam sections"],["Year 5-7","Complete 1-2 years supervised work experience"],["Year 6-7","Pass ethics exam and apply for licensure"],["Ongoing","40 CPE hours per year to maintain your license"]].map(([time,action],i)=>(
+              <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<5?`1px solid ${T.bg}`:"none",alignItems:"flex-start"}}>
+                <span style={{fontSize:11,color:T.sub,fontWeight:700,minWidth:70}}>{time}</span>
+                <span style={{fontSize:13,color:T.text}}>{action}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
+            <div style={{fontWeight:700,color:T.accent,marginBottom:8}}>💬 Ask anything about becoming a CPA</div>
+            <div style={{display:"flex",gap:8,marginBottom:cpaAskOut?10:0}}>
+              <input value={cpaAskIn} onChange={e=>setCpaAskIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&askCPA()} placeholder="e.g. Which state has the easiest CPA requirements?" style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
+              <button onClick={()=>askCPA()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>{cpaAskLoad?"...":"Ask"}</button>
+            </div>
+            {cpaAskOut&&<div style={{fontSize:13,color:T.text,lineHeight:1.7,padding:12,background:T.bg,borderRadius:10,whiteSpace:"pre-wrap"}}>{cpaAskOut}</div>}
+          </div>
+        </div>)}
+      </div>)}
+    </div>
+  </div>);
+}
