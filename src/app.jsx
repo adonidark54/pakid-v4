@@ -461,8 +461,7 @@ const CPA_HOW=[
 async function ai(sys,msg,max){
   const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:max||800,system:sys,messages:[{role:"user",content:msg}]})});
   const d=await r.json();
-  if(d.error)throw new Error(d.error); return d.content?d.content.map(c=>c.text||"").join(""):"";
- 
+  return d.content?d.content.map(c=>c.text||"").join(""):"";
 }
 export default function PaKid(){
   const[screen,setScreen]=useState("terms");
@@ -525,17 +524,15 @@ export default function PaKid(){
  
   const chatEnd=useRef(null);
   const T=THEMES[theme];
-  const getTrialDaysLeft=()=>{
+  const trialDaysLeft=(()=>{
     try{
       const saved=localStorage.getItem("pakid_sub");
       if(!saved)return null;
       const sub=JSON.parse(saved);
       if(sub.plan!=="trial")return null;
-      const daysLeft=7-Math.floor((Date.now()-sub.since)/(1000*60*60*24));
-      return Math.max(0,daysLeft);
+      return Math.max(0,7-Math.floor((Date.now()-sub.since)/(1000*60*60*24)));
     }catch(e){return null;}
-  };
-  const trialDaysLeft=getTrialDaysLeft();
+  })();
  
   const lim=()=>PLAN_LIMITS[plan]||5;
   const cnt=()=>{
@@ -553,7 +550,6 @@ export default function PaKid(){
   };
  
   useEffect(()=>{
-    // Check if returning from Stripe payment
     const params=new URLSearchParams(window.location.search);
     const sessionId=params.get("session_id");
     const planParam=params.get("plan");
@@ -568,17 +564,13 @@ export default function PaKid(){
             setScreen("usersetup");
             window.history.replaceState({},"","/");
           }
-        })
-        .catch(()=>{});
-    }
-    // Check if already subscribed from previous session
-    else{
+        }).catch(()=>{});
+    } else {
       try{
         const saved=localStorage.getItem("pakid_sub");
         if(saved){
           const sub=JSON.parse(saved);
           const daysSince=(Date.now()-sub.since)/(1000*60*60*24);
-          // If trial and more than 7 days, force back to subscribe
           if(sub.plan==="trial"&&daysSince>7){
             localStorage.removeItem("pakid_sub");
           } else {
@@ -589,7 +581,6 @@ export default function PaKid(){
       }catch(e){}
     }
   },[]);
- 
   useEffect(()=>{if(chatEnd.current)chatEnd.current.scrollIntoView({behavior:"smooth"});},[chatMsgs]);
  
   useEffect(()=>{
@@ -689,7 +680,7 @@ export default function PaKid(){
     try{
       const lvStr=lv==="highschool"?"Use simple fun language like a friendly teacher. No jargon. Make concepts relatable.":lv==="college"?"Use proper academic financial terminology. Reference textbook concepts and GAAP.":"Use advanced institutional-grade language, quantitative frameworks, and professional concepts.";
       const reply=await ai(`You are PaKid Pro Int., a financial education assistant. User level: ${lv}. ${lvStr} Cover finance, accounting, Excel, and markets. Educational only, not financial advice.`,msg,800);
-      setChatMsgs([...newM,{role:"assistant",content:reply||"No response received."}]);
+      setChatMsgs([...newM,{role:"assistant",content:reply||"Try again!"}]);
     }catch(e){setChatMsgs([...newM,{role:"assistant",content:"Connection error. Please try again."}]);}
     setChatLoad(false);
   };
@@ -832,18 +823,8 @@ export default function PaKid(){
       ))}
     </div>
  
-      <button onClick={async function(){
+    <button onClick={async function(){
         if(!plan)return;
-        if(plan==="trial"){
-          // Trial still goes through Stripe so they enter card and get charged after 7 days
-          try{
-            const res=await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan:"trial"})});
-            const data=await res.json();
-            if(data.url){window.location.href=data.url;}
-            else{alert("Trial checkout error: "+(data.error||"unknown"));}
-          }catch(e){alert("Trial network error: "+e.message);}
-          return;
-        }
         try{
           const res=await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan:plan})});
           const data=await res.json();
@@ -895,7 +876,6 @@ export default function PaKid(){
       <div>
         <div style={{fontWeight:900,fontSize:15,letterSpacing:1}}>PaKid Pro Int.</div>
         <div style={{fontSize:11,opacity:0.6,marginTop:1,letterSpacing:0.3}}>Good to see you, {username||"Friend"} {holiday||""}</div>
-        {trialDaysLeft!==null&&(<div style={{fontSize:10,background:"rgba(255,255,255,0.2)",borderRadius:8,padding:"2px 8px",marginTop:3,display:"inline-block"}}>{trialDaysLeft===0?"Trial ends today — upgrade now":trialDaysLeft===1?"1 day left in free trial":trialDaysLeft+" days left in free trial"}</div>)}
       </div>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
         <div onClick={()=>atLim()&&setShowLimit(true)} style={{background:"rgba(0,0,0,0.2)",borderRadius:20,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}><span style={{opacity:0.7,fontSize:9}}>AI</span><span>{Math.max(0,lim()-udisplay)}/{lim()}</span></div>
