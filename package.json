@@ -2,12 +2,6 @@
   "name": "pakid-v4",
   "version": "1.0.0",
   "scripts": {
-    "build": "react-scripts build",
-    "start": "react-scripts start"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
+    "build": "echo 'No build needed'"
   }
 }
