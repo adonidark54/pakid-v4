@@ -9,12 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fafafa;}
-    input,select,button,textarea{font-family:inherit;}
-    option{color:#000;background:#fff;}
-  </style>
+  <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,sans-serif;}input,select,button{font-family:inherit;}option{color:#000;background:#fff;}</style>
 </head>
 <body>
   <div id="root"></div>
@@ -481,7 +476,7 @@ const CPA_HOW=[
 ];
  
 async function ai(sys,msg,max){
-  const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:max||800,system:sys,messages:[{role:"user",content:msg}]})});
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true","x-api-key":"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"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:max||800,system:sys,messages:[{role:"user",content:msg}]})});
   const d=await r.json();
   return d.content?d.content.map(c=>c.text||"").join(""):"";
 }
@@ -930,18 +925,7 @@ function PaKid(){
             <div style={{background:T.chip,borderRadius:12,padding:14}}><div style={{fontWeight:600,color:T.sub,marginBottom:6,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>Career Path</div><div style={{fontSize:13,color:T.text,lineHeight:1.65}}>{c.path}</div></div>
           </div>)}
         </div>);})}
-        <div style={{background:T.card,borderRadius:16,padding:20,marginTop:8,border:"1px solid "+T.border}}>
-          <div style={{fontWeight:700,color:T.accent,marginBottom:8}}>💬 Ask PaKid anything about Finance</div>
-          <div style={{maxHeight:200,overflowY:"auto",marginBottom:8}}>
-            {chatMsgs.slice(-8).map((m,i)=><div key={i} style={{marginBottom:6,textAlign:m.role==="user"?"right":"left"}}><span style={{display:"inline-block",background:m.role==="user"?T.accent:T.chip,color:m.role==="user"?"#fff":T.text,padding:"10px 14px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",fontSize:13,maxWidth:"80%",lineHeight:1.5,border:m.role==="user"?"none":"1px solid "+T.border}}>{m.content}</span></div>)}
-            {chatLoad&&<div style={{color:T.sub,fontSize:13}}>Thinking... 🤔</div>}
-            <div ref={chatEnd}/>
-          </div>
-          <div style={{display:"flex",gap:8}}>
-            <input value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Ask about any finance topic..." style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
-            <button onClick={()=>sendChat()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>Send</button>
-          </div>
-        </div>
+ 
       </div>)}
       {tab==="accounting"&&(<div>
         <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
@@ -974,13 +958,7 @@ function PaKid(){
         <div style={{background:T.bg,borderRadius:10,padding:10,marginBottom:12,borderLeft:`3px solid ${T.accent}`}}>
           <div style={{fontSize:12,color:T.text}}>💡 <strong>Key connection:</strong> Ending Cash ($45,000) on the Cash Flow Statement always ties back to Cash on the Balance Sheet. All three statements are permanently linked.</div>
         </div>
-        <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
-          <div style={{fontWeight:700,color:T.accent,marginBottom:8}}>💬 Ask any accounting question</div>
-          <div style={{display:"flex",gap:8}}>
-            <input value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="e.g. What is debit vs credit?" style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
-            <button onClick={()=>sendChat()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>Ask</button>
-          </div>
-        </div>
+ 
       </div>)}
       {tab==="excel"&&(<div>
         <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
@@ -1148,14 +1126,7 @@ function PaKid(){
           </div>
           <div style={{color:T.text,fontSize:13,lineHeight:1.6}}>{ev.detail}</div>
         </div>)}
-        <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
-          <div style={{fontWeight:700,color:T.text,marginBottom:10,fontSize:15}}>Search Any Event</div>
-          <div style={{display:"flex",gap:8,marginBottom:histOut?10:0}}>
-            <input value={histIn} onChange={e=>setHistIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&searchHist()} placeholder="e.g. Enron, Bitcoin halving, 2008 crisis..." style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
-            <button onClick={()=>searchHist()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>{histLoad?"...":"Go"}</button>
-          </div>
-          {histOut&&<div><div style={{fontWeight:700,color:T.accent,marginBottom:5,fontSize:13}}>📖 {histQ}</div><div style={{fontSize:13,color:T.text,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{histOut}</div></div>}
-        </div>
+ 
       </div>)}
       {tab==="cpa"&&(<div>
         <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
@@ -1265,14 +1236,7 @@ function PaKid(){
                 {cpaPA&&<div style={{background:`${s.color}18`,borderRadius:10,padding:12,borderLeft:`4px solid ${s.color}`}}><div style={{fontWeight:700,color:s.color,marginBottom:4,fontSize:12}}>ANSWER AND EXPLANATION</div><div style={{fontSize:13,color:T.text,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{cpaPA}</div></div>}
               </div>)}
             </div>
-            <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
-              <div style={{fontWeight:700,color:T.accent,marginBottom:8}}>💬 Ask anything about {s.name}</div>
-              <div style={{display:"flex",gap:8,marginBottom:cpaAskOut?10:0}}>
-                <input value={cpaAskIn} onChange={e=>setCpaAskIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&askCPA()} placeholder={`e.g. Explain ${s.topics[0].n} simply...`} style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
-                <button onClick={()=>askCPA()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>{cpaAskLoad?"...":"Ask"}</button>
-              </div>
-              {cpaAskOut&&<div style={{fontSize:13,color:T.text,lineHeight:1.7,padding:12,background:T.bg,borderRadius:10,whiteSpace:"pre-wrap"}}>{cpaAskOut}</div>}
-            </div>
+ 
           </div>);
         })()}
         {cpaSec==="howto"&&(<div>
@@ -1293,22 +1257,14 @@ function PaKid(){
               </div>
             ))}
           </div>
-          <div style={{background:T.card,borderRadius:16,padding:20,border:"1px solid "+T.border}}>
-            <div style={{fontWeight:700,color:T.accent,marginBottom:8}}>💬 Ask anything about becoming a CPA</div>
-            <div style={{display:"flex",gap:8,marginBottom:cpaAskOut?10:0}}>
-              <input value={cpaAskIn} onChange={e=>setCpaAskIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&askCPA()} placeholder="e.g. Which state has the easiest CPA requirements?" style={{flex:1,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${T.accent}`,background:T.bg,color:T.text,fontSize:13}}/>
-              <button onClick={()=>askCPA()} style={{padding:"10px 18px",borderRadius:24,border:"none",background:T.accent,color:"#fff",fontWeight:600,cursor:"pointer",fontSize:13}}>{cpaAskLoad?"...":"Ask"}</button>
-            </div>
-            {cpaAskOut&&<div style={{fontSize:13,color:T.text,lineHeight:1.7,padding:12,background:T.bg,borderRadius:10,whiteSpace:"pre-wrap"}}>{cpaAskOut}</div>}
-          </div>
+ 
         </div>)}
       </div>)}
     </div>
   </div>);
 }
  
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(PaKid));
+    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(PaKid));
   </script>
 </body>
 </html>
