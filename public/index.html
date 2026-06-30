@@ -136,6 +136,7 @@ function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
 function genScenario(id){
   var all={
     sum:{
+      task:"Add up each row's Week 1, Week 2, and Week 3 amounts. Type each row's total in the Answer box below.",
       what:"SUM adds up a range of numbers automatically. Instead of typing =A1+A2+A3+A4 you just write =SUM(A1:A4) and it handles any size range instantly.",
       learn:[
         {step:"1",title:"Click on an empty cell",body:"Click the cell where you want your total to appear. This is where the formula result will show up."},
@@ -155,6 +156,7 @@ function genScenario(id){
       ]
     },
     ifstmt:{
+      task:"Look at each Score. Type Pass if it is 60 or higher, or Fail if it is below 60, in the Answer box for each student.",
       what:"IF checks a condition and returns one value if true and another if false. Example: =IF(score>=60, Pass, Fail) — great for automating decisions across thousands of rows.",
       learn:[
         {step:"1",title:"Understand the IF structure",body:"Every IF formula has three parts: =IF(condition, value if true, value if false). Think of it like asking a question. IF this is true THEN show this OTHERWISE show that."},
@@ -174,6 +176,7 @@ function genScenario(id){
       ]
     },
     vlookup:{
+      task:"Find which Department matches Employee ID 1042. Type the department name in the Answer box.",
       what:"VLOOKUP searches the first column of a table for a value and returns data from another column in that same row. Perfect for looking up prices, names, or departments by ID.",
       learn:[
         {step:"1",title:"Understand the 4 arguments",body:"VLOOKUP needs 4 pieces of information: =VLOOKUP(what to find, where to look, which column to return, exact or approximate match). You will always use FALSE for the last argument to get an exact match."},
@@ -194,6 +197,7 @@ function genScenario(id){
       ]
     },
     pivot:{
+      task:"Add up only the East region Sales Amount rows. Type the total in the Answer box.",
       what:"Pivot Tables summarize large datasets instantly. Drag and drop fields to see totals, averages, or counts grouped by any category — no formulas needed.",
       learn:[
         {step:"1",title:"Make sure your data has headers",body:"Every column in your data must have a header in row 1. Region, Product, Sales Amount for example. Pivot Tables use these headers as the field names you drag around."},
@@ -215,6 +219,7 @@ function genScenario(id){
       ]
     },
     charts:{
+      task:"Subtract Expenses from Revenue for each month. Type each month's Profit in the Answer box.",
       what:"Charts turn raw numbers into visual stories. A line chart shows trends over time. A bar chart compares categories. A pie chart shows proportions. Always label your axes.",
       learn:[
         {step:"1",title:"Select your data including headers",body:"Click the top left cell of your data and drag to the bottom right including the column headers. If you have Month, Revenue, and Expenses — select all three columns and all rows of data."},
@@ -236,6 +241,7 @@ function genScenario(id){
       ]
     },
     conditional:{
+      task:"Look at the Progress percentage for each task. Type On Track if 50% or higher, or Behind if below 50%, in the Answer box.",
       what:"Conditional Formatting automatically changes cell colors based on rules you set. You can make overdue tasks turn red and completed ones turn green without any manual work.",
       learn:[
         {step:"1",title:"Select the cells you want to format",body:"Click and drag to select the cells you want to color-code automatically. You can select a single column like the Status column or multiple columns at once."},
@@ -256,6 +262,7 @@ function genScenario(id){
       ]
     },
     indexmatch:{
+      task:"Find the Price of the USB Hub. Type the price in the Answer box.",
       what:"INDEX+MATCH is more powerful than VLOOKUP. MATCH finds the position of a value in a list. INDEX returns the value at that position. Together they can look up in any direction and never break when you add columns.",
       learn:[
         {step:"1",title:"Understand INDEX first",body:"INDEX returns a value from a list based on its position number. =INDEX(A2:A10, 3) returns whatever is in the third row of that range. Think of it like asking what is in position number 3 of this list."},
@@ -276,6 +283,7 @@ function genScenario(id){
       ]
     },
     sumif:{
+      task:"Add up only the Sales where Region is East. Type the total in the Answer box.",
       what:"SUMIF adds up only the rows that meet a condition. COUNTIF counts only the rows that meet a condition. Both are essential for summarizing data without building a full Pivot Table.",
       learn:[
         {step:"1",title:"Understand SUMIF arguments",body:"SUMIF needs three things: =SUMIF(range to check, condition to match, range to add up). The range to check is your Region column. The condition is East. The range to add up is your Sales column."},
@@ -296,6 +304,7 @@ function genScenario(id){
       ]
     },
     financial:{
+      task:"Calculate the monthly payment for an $18,000 loan at 6% over 60 months using PMT. Type your answer in the Answer box.",
       what:"PMT calculates the fixed payment for a loan. NPV calculates the present value of future cash flows. IRR finds the interest rate that makes an investment break even. These are the core financial functions used in banking and investing.",
       learn:[
         {step:"1",title:"Understand PMT arguments",body:"PMT needs three things: =PMT(rate, nper, pv). Rate is the interest rate per period — for monthly payments divide the annual rate by 12. Nper is the total number of payments. Pv is the present value which is the loan amount entered as a negative number."},
@@ -315,6 +324,7 @@ function genScenario(id){
       ]
     },
     textfn:{
+      task:"For each row, type which Excel function (PROPER, TRIM, LOWER, UPPER, or CONCAT) would fix that data problem in the Answer box.",
       what:"TEXT functions clean and transform text data. PROPER capitalizes names. TRIM removes extra spaces. UPPER and LOWER change case. CONCAT joins cells together. Essential for cleaning imported data.",
       learn:[
         {step:"1",title:"Clean up capitalization with PROPER",body:"=PROPER(A2) converts any text to Title Case where the first letter of each word is capitalized. JOHN SMITH becomes John Smith. MARKETING DEPARTMENT becomes Marketing Department. Perfect for cleaning imported name lists."},
@@ -335,6 +345,7 @@ function genScenario(id){
       ]
     },
     dates:{
+      task:"For each task, calculate how many days remain until the due date from today. Type the number of days in the Answer box.",
       what:"Date functions let Excel calculate time automatically. TODAY() returns todays date. DATEDIF calculates the difference between two dates. You can build trackers that update themselves every single day.",
       learn:[
         {step:"1",title:"Use TODAY() for dynamic dates",body:"=TODAY() returns todays date and updates automatically every time you open the file. You never need to type a date manually. Use it in formulas like =B2-TODAY() to calculate how many days remain until a deadline in B2."},
@@ -355,6 +366,7 @@ function genScenario(id){
       ]
     },
     error:{
+      task:"For Widget B and Widget D where Price is missing, type what IFERROR should display instead of a crash (hint: a number) in the Answer box.",
       what:"IFERROR catches errors in formulas and replaces them with something friendly. Instead of seeing a red error code you can show 0, a dash, or a custom message. Professional spreadsheets always use IFERROR.",
       learn:[
         {step:"1",title:"Recognize common Excel errors",body:"Excel shows different error codes when formulas break. DIV/0 means you divided by zero. N/A means a lookup found no match. VALUE means wrong data type. REF means a cell reference is broken. NAME means Excel does not recognize a formula name. IFERROR catches all of them."},
@@ -375,6 +387,7 @@ function genScenario(id){
       ]
     },
     array:{
+      task:"Add up only the rows where Region is East AND Product is Widget A. Type the total in the Answer box.",
       what:"Array formulas and SUMPRODUCT let you calculate across multiple conditions at once. Instead of filtering and summing separately you can write one formula that does both. Powerful for dashboards.",
       learn:[
         {step:"1",title:"Understand how arrays work",body:"An array formula performs a calculation on a whole range of cells at once instead of just one cell. When you multiply two arrays together Excel multiplies each pair of values and returns an array of results. SUMPRODUCT then adds all those results together."},
@@ -396,6 +409,7 @@ function genScenario(id){
       ]
     },
     whatif:{
+      task:"Calculate how many units must be sold to break even using Fixed Costs divided by (Price minus Variable Cost). Type the answer in the Answer box.",
       what:"Goal Seek and What-If Analysis let you work backwards. Instead of asking what is the profit if I sell 1000 units you ask how many units do I need to hit a target profit. Excel finds the answer automatically.",
       learn:[
         {step:"1",title:"Set up your model first",body:"Before using Goal Seek you need a formula that connects your inputs to your output. Build a simple model where changing one input cell changes a result cell through a formula. Break-even analysis is a classic example."},
@@ -415,6 +429,7 @@ function genScenario(id){
       ]
     },
     powerquery:{
+      task:"Subtract Returns from Sales for each row to find Net Revenue. Type each row's Net Revenue in the Answer box.",
       what:"Power Query connects to data sources and transforms data automatically. You can combine multiple files, remove duplicates, split columns, and clean data — then refresh everything with one click when new data arrives.",
       learn:[
         {step:"1",title:"Open Power Query",body:"Go to the Data tab at the top of Excel and click Get Data. You can connect to Excel files, CSV files, databases, web pages, and many other sources. Choose From File then From Excel to start with a simple spreadsheet import."},
@@ -704,25 +719,20 @@ function PaKid(){
   const loadExcel=function(t){
     setSelExcel(t);setExFb("");setShowAnswers(false);setShowLearn(false);
     var sc=genScenario(t.id);setScenario(sc);
-    var init={};
-    sc.rows.forEach(function(row,ri){
-      row.vals.forEach(function(val,vi){
-        init[ri+"-"+vi]=String(val);
-      });
-    });
-    setCells(init);
+    setCells({});
   };
   const checkExcel=async()=>{
     if(!scenario||!selExcel)return;if(!tryAI())return;
     setExFbLoad(true);
     const lv=level||"highschool";
-    const filled=Object.entries(cells).map(function(kv){return kv[0]+"="+kv[1];}).join(", ");
-    const expected=scenario.rows.map(function(row,i){return row.label+": values="+row.vals.join(",")+", answer="+row.formula;}).join(" | ");
+    const rowsData=(aiScenarios[selExcel.id]&&aiScenarios[selExcel.id].rows?aiScenarios[selExcel.id].rows:scenario.rows);
+    const filled=rowsData.map(function(row,i){return row.label+" answer: "+(cells[i+"-ans"]||"(blank)");}).join(" | ");
+    const expected=scenario.rows.map(function(row,i){return row.label+": correct answer="+row.formula;}).join(" | ");
     const lvStr=lv==="highschool"?"Simple encouraging language, plain terms, very friendly and supportive.":lv==="college"?"Proper Excel terminology and business context, reference function arguments.":"Precise technical language, formula architecture and professional best practices.";
     try{
-      const text=await ai("You are PaKid Pro Int. Excel coach. "+lvStr+" Give feedback in 3 clearly labeled parts: 1) What They Got Right 2) What Needs Fixing with exact corrections 3) One Tip to Go Further. Be encouraging and specific.","Topic: "+selExcel.label+". Scenario: "+scenario.title+". What the student is learning: "+scenario.what+" Student entered: "+(filled||"nothing yet")+". Expected answers: "+expected,600);
+      const text=await ai("You are PaKid Pro Int. Excel coach. "+lvStr+" Give feedback in 3 clearly labeled parts: 1) What They Got Right 2) What Needs Fixing with exact corrections 3) One Tip to Go Further. Be encouraging and specific.","Topic: "+selExcel.label+". Task: "+scenario.task+". Student answers: "+filled+". Correct answers: "+expected,600);
       setExFb(text);
-    }catch(e){setExFb("Good effort! Review your answers against the green cells and try again.");}
+    }catch(e){setExFb("Good effort! Review your answers against the correct answers shown and try again.");}
     setExFbLoad(false);
   };
   const searchHist=async()=>{
@@ -998,26 +1008,33 @@ function PaKid(){
           <div style={{background:T.card,borderRadius:16,padding:20,marginBottom:12,border:"1px solid "+T.border}}>
             <div style={{fontWeight:700,color:T.text,marginBottom:4,fontSize:14}}>📊 {aiScenarios[selExcel.id]&&aiScenarios[selExcel.id].title?aiScenarios[selExcel.id].title:scenario.title}</div>
             <div style={{fontSize:13,color:T.text,lineHeight:1.6,marginBottom:12}}>{aiScenarios[selExcel.id]&&aiScenarios[selExcel.id].story?aiScenarios[selExcel.id].story:scenario.story}</div>
-            <div style={{background:"#fffbeb",borderRadius:8,padding:"7px 11px",marginBottom:10,fontSize:11,color:"#92400e",fontWeight:600}}>Yellow = fill these in yourself. Green = the answer Excel would calculate.</div>
+            {scenario.task&&(<div style={{background:T.chip,borderRadius:10,padding:14,marginBottom:14,border:"2px solid "+T.accent}}>
+              <div style={{fontSize:10,color:T.accent,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>✏️ Your Task</div>
+              <div style={{fontSize:13,color:T.text,lineHeight:1.6,fontWeight:600}}>{scenario.task}</div>
+            </div>)}
             <div style={{overflowX:"auto",marginBottom:10}}>
               <table style={{borderCollapse:"collapse",fontSize:12,minWidth:"100%"}}>
-                <thead><tr>{scenario.headers.map(function(h,i){
-                  if(i===scenario.headers.length-1&&!showAnswers)return null;
-                  return(<th key={i} style={{padding:"8px 12px",background:T.accent,color:"#fff",border:"1px solid "+T.bg,whiteSpace:"nowrap",fontSize:11,fontWeight:700}}>{h}</th>);
-                })}</tr></thead>
+                <thead><tr>
+                  {scenario.headers.slice(0,-1).map(function(h,i){
+                    return(<th key={i} style={{padding:"8px 12px",background:T.accent,color:"#fff",border:"1px solid "+T.bg,whiteSpace:"nowrap",fontSize:11,fontWeight:700}}>{h}</th>);
+                  })}
+                  <th style={{padding:"8px 12px",background:"#16a34a",color:"#fff",border:"1px solid "+T.bg,whiteSpace:"nowrap",fontSize:11,fontWeight:700}}>✏️ Your Answer</th>
+                </tr></thead>
                 <tbody>{(aiScenarios[selExcel.id]&&aiScenarios[selExcel.id].rows?aiScenarios[selExcel.id].rows:scenario.rows).map(function(row,ri){
                   return(<tr key={ri}>
                     <td style={{border:"1px solid "+T.bg,padding:0,background:T.bg}}>
                       <div style={{padding:"6px 10px",fontSize:12,color:T.text,fontWeight:600}}>{row.label}</div>
                     </td>
                     {row.vals.map(function(val,vi){
-                      var k=ri+"-"+vi;
-                      return(<td key={vi} style={{border:"1px solid "+T.bg,padding:0,background:"#fffbeb"}}>
-                        <input value={cells[k]!==undefined?cells[k]:String(val)} onChange={function(e){var n=Object.assign({},cells);n[k]=e.target.value;setCells(n);}} style={{width:"100%",minWidth:80,padding:"6px 10px",border:"none",background:"transparent",color:T.text,fontSize:12,boxSizing:"border-box",outline:"none"}}/>
+                      return(<td key={vi} style={{border:"1px solid "+T.bg,padding:0,background:T.bg}}>
+                        <div style={{padding:"6px 10px",fontSize:12,color:T.sub}}>{String(val)}</div>
                       </td>);
                     })}
-                    {showAnswers&&(<td style={{border:"1px solid "+T.bg,padding:0,background:"#f0fdf4"}}>
-                      <div style={{padding:"6px 10px",color:"#16a34a",fontSize:11,fontFamily:"monospace"}}>{scenario.rows[ri]?scenario.rows[ri].formula:""}</div>
+                    <td style={{border:"2px solid #16a34a",padding:0,background:"#f0fdf4"}}>
+                      <input value={cells[ri+"-ans"]||""} onChange={function(e){var n=Object.assign({},cells);n[ri+"-ans"]=e.target.value;setCells(n);}} placeholder="Type here" style={{width:"100%",minWidth:90,padding:"6px 10px",border:"none",background:"transparent",color:T.text,fontSize:12,fontWeight:700,boxSizing:"border-box",outline:"none"}}/>
+                    </td>
+                    {showAnswers&&(<td style={{border:"1px solid "+T.bg,padding:0,background:"#fffbeb"}}>
+                      <div style={{padding:"6px 10px",color:"#92400e",fontSize:11,fontFamily:"monospace"}}>{scenario.rows[ri]?scenario.rows[ri].formula:""}</div>
                     </td>)}
                   </tr>);
                 })}</tbody>
